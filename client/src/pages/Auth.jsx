@@ -15,7 +15,10 @@ function Shell({ title, sub, children, foot }) {
     </div>);
 }
 
-const DEMOS = [['Student', 'student@smartqueue.test', 'Student@123'], ['Staff', 'staff1@smartqueue.test', 'Staff@123'], ['Admin', 'admin@smartqueue.test', 'Admin@123']];
+const DEMO_ACCOUNTS = [
+  ['Student', 'student@smartqueue.test', 'Student@123'],
+  ['Admin', 'admin@smartqueue.test', 'Admin@123'],
+];
 
 export function Login() {
   const { login } = useAuth(); const nav = useNavigate(); const loc = useLocation();
@@ -34,8 +37,8 @@ export function Login() {
         <button className="btn btn-primary w-full" disabled={busy}>{busy ? 'Logging in…' : 'Log in'}</button>
       </form>
       <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--line)' }}>
-        <p className="mb-2 text-xs text-mute">Local demo accounts (after running the seed script):</p>
-        <div className="flex gap-2">{DEMOS.map(([n, email, password]) => <button key={n} type="button" className="btn btn-ghost flex-1 !py-1.5 text-xs" onClick={() => setF({ email, password })}>{n}</button>)}</div>
+        <p className="mb-2 text-xs text-mute">Demo access (after running the seed script):</p>
+        <div className="flex gap-2">{DEMO_ACCOUNTS.map(([role, email, password]) => <button key={role} type="button" className="btn btn-ghost flex-1 !py-1.5 text-xs" onClick={() => setF({ email, password })}>Use {role.toLowerCase()} account</button>)}</div>
       </div>
     </Shell>);
 }
@@ -49,7 +52,7 @@ export function Register() {
     catch (e2) { setErr(e2.message); } finally { setBusy(false); }
   };
   return (
-    <Shell title="Create your account" sub="Students and visitors can register here." foot={<>Already registered? <Link to="/login" className="text-cyan underline">Log in</Link></>}>
+    <Shell title="Create your account" sub="Create a student account. Staff accounts are managed by an administrator." foot={<>Already registered? <Link to="/login" className="text-cyan underline">Log in</Link></>}>
       <form onSubmit={submit} className="space-y-4">
         <ErrorNote message={err} />
         <Field label="Full name" id="name"><input id="name" required minLength={2} autoComplete="name" className="input" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>

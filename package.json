@@ -1,0 +1,7 @@
+{
+  "name": "smartqueue",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix client run dev"
+  }
+}
