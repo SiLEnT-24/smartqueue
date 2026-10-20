@@ -3,5 +3,8 @@
   "private": true,
   "scripts": {
     "dev": "npm --prefix client run dev"
+  },
+  "dependencies": {
+    "mongodb": "^7.7.0"
   }
 }
