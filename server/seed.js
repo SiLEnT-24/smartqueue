@@ -1,4 +1,4 @@
-// Creates DEMO accounts/departments/counters. Run: npm run seed  (wipes users, departments, counters, tokens!)
+// Creates demo staff/student accounts and queue data. Run: npm run seed (wipes existing app data!)
 require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
@@ -21,17 +21,16 @@ const DailySequence = require('./models/DailySequence');
   const d = Object.fromEntries(depts.map(x => [x.code, x._id]));
   const hash = (p) => bcrypt.hash(p, 10);
   const users = await User.insertMany([
-    { name: 'Admin User', email: 'admin@smartqueue.test', role: 'admin', passwordHash: await hash('Admin@123') },
     { name: 'Staff One', email: 'staff1@smartqueue.test', role: 'staff', passwordHash: await hash('Staff@123') },
     { name: 'Staff Two', email: 'staff2@smartqueue.test', role: 'staff', passwordHash: await hash('Staff@123') },
     { name: 'Demo Student', email: 'student@smartqueue.test', role: 'student', passwordHash: await hash('Student@123') },
     { name: 'Demo Student 2', email: 'student2@smartqueue.test', role: 'student', passwordHash: await hash('Student@123') },
   ]);
   await Counter.insertMany([
-    { name: 'Counter 1', departments: [d.EX, d.AC], staff: users[1]._id },
-    { name: 'Counter 2', departments: [d.AD, d.LB, d.SH], staff: users[2]._id },
+    { name: 'Counter 1', departments: [d.EX, d.AC], staff: users[0]._id },
+    { name: 'Counter 2', departments: [d.AD, d.LB, d.SH], staff: users[1]._id },
     { name: 'Counter 3', departments: [d.EX, d.SH] },
   ]);
-  console.log('Seed complete (demo data). Accounts:\n admin@smartqueue.test / Admin@123\n staff1@smartqueue.test / Staff@123\n staff2@smartqueue.test / Staff@123\n student@smartqueue.test / Student@123');
+  console.log('Seed complete (demo data). First create the admin account at /admin-register.\nAccounts:\n staff1@smartqueue.test / Staff@123\n staff2@smartqueue.test / Staff@123\n student@smartqueue.test / Student@123');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

@@ -16,9 +16,10 @@ export function AuthProvider({ children }) {
   const finish = (r) => { setToken(r.token); setUser(r.user); return r.user; };
   const login = useCallback(async (email, password) => finish(await api.post('/auth/login', { email, password })), []);
   const register = useCallback(async (name, email, password) => finish(await api.post('/auth/register', { name, email, password })), []);
+  const registerAdmin = useCallback(async (name, email, password) => finish(await api.post('/auth/register-admin', { name, email, password })), []);
   const logout = useCallback(() => { setToken(null); setUser(null); }, []);
 
-  return <Ctx.Provider value={{ user, setUser, loading, login, register, logout }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ user, setUser, loading, login, register, registerAdmin, logout }}>{children}</Ctx.Provider>;
 }
 
 export const homeFor = (role) => ({ admin: '/app/admin', staff: '/app/staff' }[role] || '/app');

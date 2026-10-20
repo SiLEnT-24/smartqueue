@@ -15,50 +15,64 @@ function Shell({ title, sub, children, foot }) {
     </div>);
 }
 
-const DEMO_ACCOUNTS = [
-  ['Student', 'student@smartqueue.test', 'Student@123'],
-  ['Admin', 'admin@smartqueue.test', 'Admin@123'],
-];
-
-export function Login() {
-  const { login } = useAuth(); const nav = useNavigate(); const loc = useLocation();
+export function Login({ adminOnly = false }) {
+  const { login, logout } = useAuth(); const nav = useNavigate(); const loc = useLocation();
   const [f, setF] = useState({ email: '', password: '' }); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false); const [showPassword, setShowPassword] = useState(false);
   const submit = async (e) => {
     e.preventDefault(); setErr(''); setBusy(true);
-    try { const u = await login(f.email, f.password); nav(loc.state?.from?.startsWith('/app') ? loc.state.from : homeFor(u.role), { replace: true }); }
+    try {
+      const u = await login(f.email, f.password);
+      if (adminOnly && u.role !== 'admin') {
+        logout();
+        setErr('This account does not have administrator access.');
+        return;
+      }
+      nav(adminOnly ? '/app/admin' : loc.state?.from?.startsWith('/app') ? loc.state.from : homeFor(u.role), { replace: true });
+    }
     catch (e2) { setErr(e2.message); } finally { setBusy(false); }
   };
   return (
-    <Shell title="Welcome back" sub="Log in to see your queue." foot={<>New here? <Link to="/register" className="text-cyan underline">Create an account</Link></>}>
+    <Shell
+      title={adminOnly ? 'Administrator login' : 'Welcome back'}
+      sub={adminOnly ? 'Sign in with your administrator account.' : 'Log in to see your queue.'}
+      foot={adminOnly
+        ? <>First administrator? <Link to="/admin-register" className="text-cyan underline">Create the admin account</Link><br />Not an administrator? <Link to="/login" className="text-cyan underline">Regular login</Link></>
+        : <>New here? <Link to="/register" className="text-cyan underline">Create an account</Link><br />Administrator? <Link to="/admin-login" className="text-cyan underline">Admin login</Link></>}
+    >
       <form onSubmit={submit} className="space-y-4">
         <ErrorNote message={err} />
         <Field label="Email" id="email"><input id="email" type="email" required autoComplete="email" className="input" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
         <Field label="Password" id="pw"><div className="relative"><input id="pw" type={showPassword ? 'text' : 'password'} required autoComplete="current-password" className="input pr-11" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /><button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-mute hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></Field>
         <button className="btn btn-primary w-full" disabled={busy}>{busy ? 'Logging in…' : 'Log in'}</button>
       </form>
-      <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--line)' }}>
-        <p className="mb-2 text-xs text-mute">Demo access (after running the seed script):</p>
-        <div className="flex gap-2">{DEMO_ACCOUNTS.map(([role, email, password]) => <button key={role} type="button" className="btn btn-ghost flex-1 !py-1.5 text-xs" onClick={() => setF({ email, password })}>Use {role.toLowerCase()} account</button>)}</div>
-      </div>
     </Shell>);
 }
 
-export function Register() {
-  const { register } = useAuth(); const nav = useNavigate();
+export function Register({ adminOnly = false }) {
+  const { register, registerAdmin } = useAuth(); const nav = useNavigate();
   const [f, setF] = useState({ name: '', email: '', password: '' }); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false); const [showPassword, setShowPassword] = useState(false);
   const submit = async (e) => {
     e.preventDefault(); setErr(''); setBusy(true);
-    try { await register(f.name, f.email, f.password); nav('/app', { replace: true }); }
+    try {
+      await (adminOnly ? registerAdmin : register)(f.name, f.email, f.password);
+      nav(adminOnly ? '/app/admin' : '/app', { replace: true });
+    }
     catch (e2) { setErr(e2.message); } finally { setBusy(false); }
   };
   return (
-    <Shell title="Create your account" sub="Create a student account. Staff accounts are managed by an administrator." foot={<>Already registered? <Link to="/login" className="text-cyan underline">Log in</Link></>}>
+    <Shell
+      title={adminOnly ? 'Create administrator account' : 'Create your account'}
+      sub={adminOnly ? 'Only the first administrator account can be registered.' : 'Create a student account. Staff accounts are managed by an administrator.'}
+      foot={adminOnly
+        ? <>Already have an administrator account? <Link to="/admin-login" className="text-cyan underline">Admin login</Link></>
+        : <>Already registered? <Link to="/login" className="text-cyan underline">Log in</Link></>}
+    >
       <form onSubmit={submit} className="space-y-4">
         <ErrorNote message={err} />
         <Field label="Full name" id="name"><input id="name" required minLength={2} autoComplete="name" className="input" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
         <Field label="Email" id="email"><input id="email" type="email" required autoComplete="email" className="input" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
         <Field label="Password (at least 6 characters)" id="pw"><div className="relative"><input id="pw" type={showPassword ? 'text' : 'password'} required minLength={6} autoComplete="new-password" className="input pr-11" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /><button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-mute hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></Field>
-        <button className="btn btn-primary w-full" disabled={busy}>{busy ? 'Creating…' : 'Create account'}</button>
+        <button className="btn btn-primary w-full" disabled={busy}>{busy ? 'Creating…' : adminOnly ? 'Create administrator account' : 'Create account'}</button>
       </form>
     </Shell>);
 }

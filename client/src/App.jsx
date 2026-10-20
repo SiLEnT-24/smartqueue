@@ -24,7 +24,9 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/admin-login" element={<Login adminOnly />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/admin-register" element={<Register adminOnly />} />
       <Route path="/display" element={<Display />} />
       <Route path="/app" element={<Guard><Layout /></Guard>}>
         <Route index element={<Guard roles={['student']}><StudentDashboard /></Guard>} />

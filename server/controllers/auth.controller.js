@@ -15,6 +15,34 @@ exports.register = asyncHandler(async (req, res) => {
   res.status(201).json({ token: sign(user), user: pub(user) });
 });
 
+exports.registerAdmin = asyncHandler(async (req, res) => {
+  const { name, email, password } = req.body;
+  if (!password || password.length < 6) throw new HttpError(400, 'Password must be at least 6 characters');
+
+  await User.init();
+  const setupState = User.db.collection('setup_state');
+  const registrationClosed = { _id: 'admin-registration-closed', closedAt: new Date() };
+  if (await setupState.findOne({ _id: registrationClosed._id })) {
+    throw new HttpError(409, 'Admin registration is closed.');
+  }
+  if (await User.exists({ role: 'admin' })) {
+    await setupState.updateOne({ _id: registrationClosed._id }, { $setOnInsert: registrationClosed }, { upsert: true });
+    throw new HttpError(409, 'An administrator account already exists. Admin registration is closed.');
+  }
+
+  let user;
+  try {
+    user = await User.create({ name, email, passwordHash: await bcrypt.hash(password, 10), role: 'admin' });
+  } catch (error) {
+    if (error.code === 11000 && error.keyPattern && error.keyPattern.role) {
+      throw new HttpError(409, 'An administrator account already exists. Admin registration is closed.');
+    }
+    throw error;
+  }
+  await setupState.updateOne({ _id: registrationClosed._id }, { $setOnInsert: registrationClosed }, { upsert: true });
+  res.status(201).json({ token: sign(user), user: pub(user) });
+});
+
 exports.login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email: String(email || '').toLowerCase() }).select('+passwordHash');

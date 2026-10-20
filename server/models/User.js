@@ -7,4 +7,5 @@ const schema = new mongoose.Schema({
   role: { type: String, enum: ['student', 'staff', 'admin'], default: 'student' },
   active: { type: Boolean, default: true },
 }, { timestamps: true });
+schema.index({ role: 1 }, { unique: true, partialFilterExpression: { role: 'admin' } });
 module.exports = mongoose.model('User', schema);

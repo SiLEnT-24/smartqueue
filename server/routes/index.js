@@ -10,6 +10,7 @@ const A = requireRole('admin'), S = requireRole('staff', 'admin');
 
 // auth
 router.post('/auth/register', auth.register);
+router.post('/auth/register-admin', auth.registerAdmin);
 router.post('/auth/login', auth.login);
 router.get('/auth/me', protect, auth.me);
 router.patch('/auth/me', protect, auth.updateProfile);
