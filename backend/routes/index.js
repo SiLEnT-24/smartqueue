@@ -53,6 +53,7 @@ router.get('/feedback', protect, A, fb.summary);
 
 // analytics + reports
 router.get('/analytics', protect, A, an.overview);
+router.get('/analytics/summary', protect, A, an.summary);
 router.get('/analytics/export', protect, A, an.exportCsv);
 
 module.exports = router;

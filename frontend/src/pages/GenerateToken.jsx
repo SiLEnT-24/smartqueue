@@ -23,7 +23,12 @@ export default function GenerateToken() {
 
   const take = async (d) => {
     setErr(''); setBusy(d._id);
-    try { const t = await api.post('/tokens', { departmentId: d._id }); toast(`Token ${t.tokenNumber} generated`, 'success'); nav(`/app/token/${t.id}`); }
+    try {
+      const t = await api.post('/tokens', { departmentId: d._id });
+      const failed = [t.emailSent === false && 'email', t.smsSent === false && 'SMS'].filter(Boolean);
+      toast(failed.length ? `Token ${t.tokenNumber} generated, but the ${failed.join(' and ')} could not be sent.` : `Token ${t.tokenNumber} generated`, failed.length ? 'error' : 'success');
+      nav(`/app/token/${t.id}`);
+    }
     catch (e) { setErr(e.message); } finally { setBusy(''); }
   };
 

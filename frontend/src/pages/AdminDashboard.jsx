@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Ticket, Users, CheckCircle2, Clock, PhoneCall, Star } from 'lucide-react';
+import { Ticket, Users, CheckCircle2, Clock, PhoneCall, Star, Sparkles } from 'lucide-react';
 import { api } from '../api';
 import { useToast } from '../context/ThemeToast';
 import { useEvent } from '../context/SocketContext';
@@ -23,8 +23,17 @@ function Overview() {
   const { data: a, error, reload } = useLoad(() => api.get('/analytics'));
   const { data: depts } = useLoad(() => api.get('/admin/departments'));
   const { data: fb } = useLoad(() => api.get('/feedback'));
+  const [summary, setSummary] = useState('');
+  const [summaryError, setSummaryError] = useState('');
+  const [summaryLoading, setSummaryLoading] = useState(false);
   useEvent('queue:update', useCallback(() => reload(), []));
   const autoCall = async (d) => { try { const r = await api.post('/staff/auto-call', { departmentId: d._id }); toast(r.token ? `${r.token.tokenNumber} called. ${r.message}` : 'Queue is empty', r.token ? 'success' : 'info'); reload(); } catch (e) { toast(e.message, 'error'); } };
+  const generateSummary = async () => {
+    setSummaryLoading(true); setSummaryError('');
+    try { const result = await api.get('/analytics/summary'); setSummary(result.summary); }
+    catch (e) { setSummaryError(e.message); }
+    finally { setSummaryLoading(false); }
+  };
   if (!a) return error ? <ErrorNote message={error} /> : <Spinner />;
   const t = a.totals;
   return (<>
@@ -33,6 +42,12 @@ function Overview() {
       <Stat label="Tokens generated" value={t.total} icon={Ticket} /><Stat label="Waiting now" value={t.waiting} icon={Users} /><Stat label="Completed" value={t.completed} icon={CheckCircle2} />
       <Stat label="Avg. wait (min)" value={a.avgWaitMin} decimals={1} icon={Clock} /><Stat label="Avg. service (min)" value={a.avgServiceMin} decimals={1} icon={Clock} /><Stat label="Average rating" value={fb?.average} decimals={1} icon={Star} />
     </div>
+    <Card className="mt-6">
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">AI analytics summary</h2><p className="text-sm text-mute">Generated from today’s aggregated queue metrics.</p></div>
+        <button className="btn btn-ghost" onClick={generateSummary} disabled={summaryLoading}><Sparkles size={16} />{summaryLoading ? 'Generating…' : 'Generate summary'}</button></div>
+      {summaryError && <ErrorNote message={summaryError} />}
+      {summary && <p className="mt-4 whitespace-pre-wrap text-sm leading-6">{summary}</p>}
+    </Card>
     <h2 className="mb-3 mt-8 text-lg font-semibold">Auto-assign the best free counter</h2>
     <p className="mb-3 text-sm text-mute">Picks an active, free counter serving that department with the lowest workload today, then calls the next token.</p>
     <div className="flex flex-wrap gap-2">{(depts || []).filter((d) => d.active).map((d) => <button key={d._id} className="btn btn-ghost" onClick={() => autoCall(d)}><PhoneCall size={16} />{d.name}</button>)}</div>

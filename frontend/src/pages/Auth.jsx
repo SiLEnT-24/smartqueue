@@ -36,7 +36,7 @@ export function Login({ adminOnly = false }) {
       title={adminOnly ? 'Administrator login' : 'Welcome back'}
       sub={adminOnly ? 'Sign in with your administrator account.' : 'Log in to see your queue.'}
       foot={adminOnly
-        ? <>First administrator? <Link to="/admin-register" className="text-cyan underline">Create the admin account</Link><br />Not an administrator? <Link to="/login" className="text-cyan underline">Regular login</Link></>
+        ? <>Need an administrator account? <Link to="/admin-register" className="text-cyan underline">Register with the admin code</Link><br />Not an administrator? <Link to="/login" className="text-cyan underline">Regular login</Link></>
         : <>New here? <Link to="/register" className="text-cyan underline">Create an account</Link><br />Administrator? <Link to="/admin-login" className="text-cyan underline">Admin login</Link></>}
     >
       <form onSubmit={submit} className="space-y-4">
@@ -50,11 +50,12 @@ export function Login({ adminOnly = false }) {
 
 export function Register({ adminOnly = false }) {
   const { register, registerAdmin } = useAuth(); const nav = useNavigate();
-  const [f, setF] = useState({ name: '', email: '', password: '' }); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false); const [showPassword, setShowPassword] = useState(false);
+  const [f, setF] = useState({ name: '', email: '', password: '', registrationCode: '' }); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false); const [showPassword, setShowPassword] = useState(false);
   const submit = async (e) => {
     e.preventDefault(); setErr(''); setBusy(true);
     try {
-      await (adminOnly ? registerAdmin : register)(f.name, f.email, f.password);
+      if (adminOnly) await registerAdmin(f.name, f.email, f.password, f.registrationCode);
+      else await register(f.name, f.email, f.password);
       nav(adminOnly ? '/app/admin' : '/app', { replace: true });
     }
     catch (e2) { setErr(e2.message); } finally { setBusy(false); }
@@ -62,7 +63,7 @@ export function Register({ adminOnly = false }) {
   return (
     <Shell
       title={adminOnly ? 'Create administrator account' : 'Create your account'}
-      sub={adminOnly ? 'Only the first administrator account can be registered.' : 'Create a student account. Staff accounts are managed by an administrator.'}
+      sub={adminOnly ? 'Register one of up to five administrators with the shared registration code.' : 'Create a student account. Staff accounts are managed by an administrator.'}
       foot={adminOnly
         ? <>Already have an administrator account? <Link to="/admin-login" className="text-cyan underline">Admin login</Link></>
         : <>Already registered? <Link to="/login" className="text-cyan underline">Log in</Link></>}
@@ -71,6 +72,7 @@ export function Register({ adminOnly = false }) {
         <ErrorNote message={err} />
         <Field label="Full name" id="name"><input id="name" required minLength={2} autoComplete="name" className="input" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
         <Field label="Email" id="email"><input id="email" type="email" required autoComplete="email" className="input" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
+        {adminOnly && <Field label="Administrator registration code" id="registrationCode"><input id="registrationCode" type="password" required autoComplete="off" className="input" value={f.registrationCode} onChange={(e) => setF({ ...f, registrationCode: e.target.value })} /></Field>}
         <Field label="Password (at least 6 characters)" id="pw"><div className="relative"><input id="pw" type={showPassword ? 'text' : 'password'} required minLength={6} autoComplete="new-password" className="input pr-11" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /><button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-mute hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></Field>
         <button className="btn btn-primary w-full" disabled={busy}>{busy ? 'Creating…' : adminOnly ? 'Create administrator account' : 'Create account'}</button>
       </form>

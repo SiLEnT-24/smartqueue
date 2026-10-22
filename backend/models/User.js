@@ -4,8 +4,9 @@ const schema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true,
            match: [/^\S+@\S+\.\S+$/, 'Invalid email'] },
   passwordHash: { type: String, required: true, select: false },
+  phone: { type: String, default: '' },
+  smsOptIn: { type: Boolean, default: false },
   role: { type: String, enum: ['student', 'staff', 'admin'], default: 'student' },
   active: { type: Boolean, default: true },
 }, { timestamps: true });
-schema.index({ role: 1 }, { unique: true, partialFilterExpression: { role: 'admin' } });
 module.exports = mongoose.model('User', schema);

@@ -5,6 +5,7 @@ const Counter = require('../models/Counter');
 const AuditLog = require('../models/AuditLog');
 const asyncHandler = require('../utils/asyncHandler');
 const HttpError = require('../utils/httpError');
+const { createAdminAccount, ensureAdminCounter, releaseAdminSlot, reserveAdminSlot } = require('../services/adminRegistration.service');
 
 // users
 exports.listUsers = asyncHandler(async (req, res) => res.json(await User.find().sort('-createdAt')));
@@ -12,15 +13,35 @@ exports.createUser = asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
   if (!['student', 'staff', 'admin'].includes(role)) throw new HttpError(400, 'Invalid role');
   if (!password || password.length < 6) throw new HttpError(400, 'Password must be at least 6 characters');
-  const u = await User.create({ name, email, role, passwordHash: await bcrypt.hash(password, 10) });
+  const fields = { name, email, passwordHash: await bcrypt.hash(password, 10) };
+  const u = role === 'admin' ? await createAdminAccount(fields) : await User.create({ ...fields, role });
   res.status(201).json(u);
 });
 exports.updateUser = asyncHandler(async (req, res) => {
   const { role, active, name } = req.body;
   if (String(req.params.id) === String(req.user._id) && (active === false || (role && role !== 'admin')))
     throw new HttpError(400, 'You cannot demote or deactivate yourself');
-  const u = await User.findByIdAndUpdate(req.params.id, { $set: { ...(role && { role }), ...(typeof active === 'boolean' && { active }), ...(name && { name }) } }, { new: true, runValidators: true });
-  if (!u) throw new HttpError(404, 'User not found');
+  const current = role ? await User.findById(req.params.id).select('role') : null;
+  if (role && !current) throw new HttpError(404, 'User not found');
+  const promoting = role === 'admin' && current.role !== 'admin';
+  const demoting = current?.role === 'admin' && role && role !== 'admin';
+  const slot = promoting ? await reserveAdminSlot() : null;
+  if (demoting) await ensureAdminCounter();
+  let u;
+  try {
+    u = await User.findByIdAndUpdate(req.params.id, { $set: { ...(role && { role }), ...(typeof active === 'boolean' && { active }), ...(name && { name }) } }, { new: true, runValidators: true });
+  } catch (error) {
+    if (slot) {
+      try { await releaseAdminSlot(slot); }
+      catch (releaseError) { console.error('Could not release administrator registration slot:', releaseError.message); }
+    }
+    throw error;
+  }
+  if (!u) {
+    if (slot) await releaseAdminSlot(slot);
+    throw new HttpError(404, 'User not found');
+  }
+  if (demoting) await releaseAdminSlot(await ensureAdminCounter());
   res.json(u);
 });
 

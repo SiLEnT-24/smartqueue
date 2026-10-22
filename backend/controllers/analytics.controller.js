@@ -16,8 +16,8 @@ function buildMatch(q) {
   return { match: m, from, to };
 }
 
-exports.overview = asyncHandler(async (req, res) => {
-  const { match, from, to } = buildMatch(req.query);
+async function getOverview(query) {
+  const { match, from, to } = buildMatch(query);
   const [statusAgg, waitAgg, svcAgg, hourly, perCounter, waitingNow] = await Promise.all([
     Token.aggregate([{ $match: match }, { $group: { _id: '$status', n: { $sum: 1 } } }]),
     Token.aggregate([{ $match: { ...match, calledAt: { $ne: null } } },
@@ -36,7 +36,7 @@ exports.overview = asyncHandler(async (req, res) => {
   const cName = Object.fromEntries(counters.map(c => [String(c._id), c.name]));
   const waitMap = Object.fromEntries(waitingNow.map(w => [String(w._id), w.n]));
   const hours = Array.from({ length: 24 }, (_, h) => ({ hour: `${String(h).padStart(2, '0')}:00`, tokens: (hourly.find(x => x._id === h) || {}).n || 0 }));
-  res.json({
+  return {
     range: { from, to },
     totals: { total, waiting: counts.WAITING || 0, serving: (counts.SERVING || 0) + (counts.CALLED || 0),
       completed: counts.COMPLETED || 0, noShow: counts.NO_SHOW || 0, cancelled: counts.CANCELLED || 0, skipped: counts.SKIPPED || 0 },
@@ -45,7 +45,16 @@ exports.overview = asyncHandler(async (req, res) => {
     departmentQueues: depts.map(d => ({ name: d.name, code: d.code, waiting: waitMap[String(d._id)] || 0 })),
     hourly: hours.filter(h => h.tokens > 0 || (Number(h.hour.slice(0, 2)) >= 8 && Number(h.hour.slice(0, 2)) <= 18)),
     counterUtilization: perCounter.map(c => ({ counter: cName[String(c._id)] || 'Unknown', served: c.served, busyMinutes: num(c.busyMs / 60000) })),
-  });
+  };
+}
+
+exports.overview = asyncHandler(async (req, res) => {
+  res.json(await getOverview(req.query));
+});
+
+const { createAnalyticsSummary } = require('../services/analyticsSummary.service');
+exports.summary = asyncHandler(async (req, res) => {
+  res.json({ summary: await createAnalyticsSummary(await getOverview(req.query)) });
 });
 
 const esc = (v) => { const s = v == null ? '' : String(v); return /^[=+\-@]/.test(s) ? `"'${s.replace(/"/g, '""')}"` : `"${s.replace(/"/g, '""')}"`; };

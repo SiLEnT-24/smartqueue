@@ -7,6 +7,7 @@ const HttpError = require('../utils/httpError');
 const { dayKey } = require('../utils/dates');
 const { emitTo } = require('../utils/socket');
 const est = require('./estimate.service');
+const { sendTokenCreatedEmail, sendTokenCreatedSms } = require('./sms.service');
 
 // Allowed lifecycle moves. Anything not listed here is rejected by the server.
 const TRANSITIONS = {
@@ -135,8 +136,25 @@ async function generateToken(user, departmentId) {
   await token.save();
   await audit(user, 'TOKEN_CREATED', { token: token._id });
   await notifyUser(token, 'GENERATED', `Token ${token.tokenNumber} generated. Estimated wait ${view.estimatedWaitLabel}.`);
+  const notifications = {};
+  try {
+    const emailSent = await sendTokenCreatedEmail(user.email, user.name, view);
+    if (emailSent !== null) notifications.emailSent = emailSent;
+  } catch (error) {
+    console.error(`Email notification failed for token ${token._id}:`, error.message);
+    notifications.emailSent = false;
+  }
+  if (user.smsOptIn && user.phone) {
+    try {
+      const smsSent = await sendTokenCreatedSms(user.phone, view);
+      if (smsSent !== null) notifications.smsSent = smsSent;
+    } catch (error) {
+      console.error(`SMS notification failed for token ${token._id}:`, error.message);
+      notifications.smsSent = false;
+    }
+  }
   await broadcast(dept._id);
-  return view;
+  return { ...view, ...notifications };
 }
 
 // ---------- state machine ----------
