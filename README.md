@@ -29,3 +29,9 @@ npm run dev
 - **Brevo email and SMS:** Set `BREVO_API_KEY`, `BREVO_SENDER_EMAIL` (a verified sender), and `BREVO_SENDER_NAME` to email token receipts to the student's account email. Set `BREVO_SMS_SENDER` as well to enable SMS for students who save an E.164 phone number (for example, `+14155552671`) and opt in on their Profile. The same Brevo API key is used for both channels. A delivery failure does not undo token creation; the API response and server log report when a notification could not be sent.
 
 Keep `server/.env` private and never commit API keys or credentials. The `.env` file is ignored by Git; `.env.example` contains placeholders only.
+
+## Deploying to Netlify
+
+`netlify.toml` builds the React app from `frontend/` and serves the Express API from `backend/` through a Netlify Function at `/api/*`. In the Netlify project settings, add `MONGO_URI` (a MongoDB reachable from the internet, such as MongoDB Atlas with network access allowed for Netlify) and `JWT_SECRET`, plus any of the optional variables above. Until both are set, API requests return a "not configured" message.
+
+Netlify Functions can't hold Socket.io connections open, so the deployed app refreshes queues, tokens, and the display screen by polling the API every few seconds. Local development still uses Socket.io. To use a separately hosted Socket.io server instead, set `VITE_SOCKET_URL` at build time.

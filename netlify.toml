@@ -1,0 +1,19 @@
+[build]
+  command = "npm ci --prefix backend --omit=dev && npm ci --prefix frontend && npm run build --prefix frontend"
+  publish = "frontend/dist"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Express API (backend/) served by a Netlify Function
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+# React Router: serve the app shell for every client-side route
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
