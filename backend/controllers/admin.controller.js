@@ -11,7 +11,7 @@ const { createAdminAccount, ensureAdminCounter, releaseAdminSlot, reserveAdminSl
 exports.listUsers = asyncHandler(async (req, res) => res.json(await User.find().sort('-createdAt')));
 exports.createUser = asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
-  if (!['student', 'staff', 'admin'].includes(role)) throw new HttpError(400, 'Invalid role');
+  if (!['user', 'admin'].includes(role)) throw new HttpError(400, 'Invalid role');
   if (!password || password.length < 6) throw new HttpError(400, 'Password must be at least 6 characters');
   const fields = { name, email, passwordHash: await bcrypt.hash(password, 10) };
   const u = role === 'admin' ? await createAdminAccount(fields) : await User.create({ ...fields, role });
@@ -60,14 +60,9 @@ exports.updateDepartment = asyncHandler(async (req, res) => {
 
 // counters
 exports.listCounters = asyncHandler(async (req, res) =>
-  res.json(await Counter.find().populate('departments', 'name code').populate('staff', 'name email').sort('name')));
+  res.json(await Counter.find().populate('departments', 'name code').sort('name')));
 exports.createCounter = asyncHandler(async (req, res) => res.status(201).json(await Counter.create(req.body)));
 exports.updateCounter = asyncHandler(async (req, res) => {
-  if (req.body.staff) {
-    const s = await User.findById(req.body.staff);
-    if (!s || s.role !== 'staff') throw new HttpError(400, 'Only staff users can be assigned to a counter');
-    await Counter.updateMany({ staff: s._id, _id: { $ne: req.params.id } }, { $set: { staff: null } }); // one counter per staff
-  }
   const c = await Counter.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
   if (!c) throw new HttpError(404, 'Counter not found');
   res.json(c);

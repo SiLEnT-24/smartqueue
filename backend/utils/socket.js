@@ -11,7 +11,7 @@ exports.init = (httpServer) => {
       if (t) {
         const p = jwt.verify(t, process.env.JWT_SECRET);
         socket.join(`user:${p.id}`);
-        if (p.role !== 'student') socket.join('staff');
+        if (p.role === 'admin') socket.join('queue-managers');
       }
     } catch (_) { /* anonymous socket */ }
     socket.on('join:display', () => socket.join('display'));

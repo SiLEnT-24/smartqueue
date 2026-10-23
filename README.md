@@ -1,6 +1,6 @@
 # SmartQueue
 
-SmartQueue is a college service queue management application. Students join department queues with digital tokens and follow their place in line. Staff manage the tokens assigned to their counters, while administrators configure services and counters and review operational reports.
+SmartQueue is a college service queue management application. Users join department queues with digital tokens and follow their place in line. Administrators configure services and counters, manage every queue, and review operational reports.
 
 The project includes a React single-page application, an Express API, MongoDB persistence, Socket.IO live updates, and an optional OpenRouter-powered assistant.
 
@@ -22,51 +22,55 @@ The project includes a React single-page application, an Express API, MongoDB pe
 
 ## Features
 
-- Student registration, login, profile updates, and role-based access.
+- User registration, login, profile updates, and role-based access.
 - Department service discovery and token generation.
 - Live token status, queue position, people ahead, and estimated waiting time.
-- Counter assignment, queue calling, and token lifecycle actions for staff.
+- Administrator queue control across counters, including token lifecycle actions.
 - Administrative management of users, departments, counters, and priority tokens.
 - Public queue status and reception display with optional spoken announcements.
 - In-app alerts, browser notifications, and optional token-created email/SMS notifications.
-- Student feedback after service and administrative feedback summaries.
+- User feedback after service and administrative feedback summaries.
 - Date/department-filtered analytics, CSV export, and optional AI-generated analytics summaries.
 - SmartQueue assistant for token, queue, wait-time, service, alert, feedback, and app-use questions.
 
 ## Roles and application pages
 
-### Students
+### Users
 
-- **My dashboard** — see active tokens and recent queue updates.
+- **My dashboard** — see your active tokens, personal token history, and recent queue updates.
 - **Get a token** — choose an available department and join its queue.
 - **Assistant** — ask about your token, queues, services, waits, and how to use the app.
 - **Feedback** — rate a completed service and optionally leave a comment.
 - **Profile** — update account details and notification preferences.
 
-### Staff
-
-- **My counter** — see the queue for the departments handled by the assigned counter.
-- Call the next token and start, complete, skip, hold, resume, or mark a token as a no-show, subject to allowed state changes.
-- Use the assistant for SmartQueue guidance.
-
-Staff members are assigned a counter by an administrator. A staff member can only manage tokens for departments served by that counter.
+Users can view and change only their own profile, tokens, and feedback. Registration always creates a `user` account.
 
 ### Administrators
 
 - **Overview** — review operational totals.
-- **Counters** — configure counters, departments served, and staff assignments.
+- **Queue control** — select a counter and manage its queue.
+- **Counters** — configure active counters and the departments they serve.
 - **Analytics** — inspect queue metrics, request an optional AI summary, and export CSV reports.
 - **Feedback** — review ratings and comments.
 - **Assistant** — ask SmartQueue usage questions.
-- Create/manage users and departments, enable priority handling, and inspect audit logs.
+- Create, update, activate, or deactivate user and administrator accounts; manage departments, counters, and priority tokens; inspect audit logs.
+- Call the next token and start, complete, skip, hold, resume, or mark tokens as no-show, subject to allowed state changes.
 
-Public registration always creates a student account. Staff accounts are created or assigned by an administrator. Admin registration requires the configured shared code and is limited to five administrator accounts.
+Administrators can manage queue operations across counters and departments. Admin registration requires the configured shared code and is limited to five administrator accounts.
 
 ### Public visitors
 
 - View active departments and public queue status.
 - Open the reception display without logging in.
 - Use the home page assistant shortcut; sign-in is required to start a chat.
+
+### Access control
+
+- The only account roles are `user` and `admin`.
+- Users can access only their own profile, tokens, and feedback.
+- Administrators can perform queue-management and administrative operations across departments and counters.
+- Public visitors have read-only access to public queue information.
+- Admin API operations require an authenticated administrator account.
 
 ## Queue and wait-time behavior
 
@@ -117,7 +121,7 @@ smartqueue/
     ├── src/
     │   ├── components/  # Shared layout and UI components
     │   ├── context/     # Auth, socket, theme, and toast state
-    │   ├── pages/       # Student, staff, admin, public, and assistant views
+    │   ├── pages/       # User, admin, public, and assistant views
     │   ├── api.js       # Authenticated API client
     │   └── App.jsx      # Client-side routes
     └── vite.config.js   # Development server and API/socket proxies
@@ -172,7 +176,7 @@ Open the Vite URL shown in the terminal (normally `http://localhost:5173`). The 
 
 Set a private `ADMIN_REGISTRATION_CODE` in `backend/.env`, start the application, and use the **Administrator registration** page at `/admin-register`. Keep the code private and do not put it in frontend configuration.
 
-An administrator can then create staff accounts, configure departments and counters, and assign staff members.
+An administrator can then create users or administrators, configure departments and counters, and manage queues.
 
 ### Health check
 
@@ -206,17 +210,17 @@ The backend loads settings from `backend/.env`. Never put server secrets in fron
 
 Set `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` in `backend/.env` and restart the backend. The key stays on the server. With the key absent, the assistant answers supported questions using built-in rules and live queue data. With OpenRouter configured, it sends the assistant prompt, recent conversation, and limited live queue context to the selected model.
 
-The assistant is intended only for SmartQueue questions. It cannot create, cancel, or modify tokens. It uses active department queue details and the signed-in student's active tokens; it does not need names, email addresses, phone numbers, feedback, or old token history to answer. The chat endpoint limits messages to one per user every two seconds per backend process.
+The assistant is intended only for SmartQueue questions. It cannot create, cancel, or modify tokens. It uses active department queue details and the signed-in user's active tokens; it does not need names, email addresses, phone numbers, feedback, or old token history to answer. The chat endpoint limits messages to one per user every two seconds per backend process.
 
 ### Optional email and SMS
 
-When configured, Brevo can send a token-created email to the student's account email. SMS requires the Brevo key and sender, a phone number saved in E.164 format (for example, `+14155552671`), and the student's SMS opt-in on their Profile. Notification delivery is separate from token creation; a notification failure does not roll back the token.
+When configured, Brevo can send a token-created email to the user's account email. SMS requires the Brevo key and sender, a phone number saved in E.164 format (for example, `+14155552671`), and the user's SMS opt-in on their Profile. Notification delivery is separate from token creation; a notification failure does not roll back the token.
 
 Browser notification permission is managed by the user's browser. In-app alerts are delivered through the live socket connection.
 
 ## Seed data
 
-The optional backend seeder creates sample departments, counters, staff, and student accounts:
+The optional backend seeder creates sample departments, counters, and user accounts:
 
 ```powershell
 Set-Location backend
@@ -225,7 +229,7 @@ npm run seed
 
 > **Warning:** `seed.js` deletes existing users, departments, counters, tokens, feedback, audit logs, and daily sequence data before inserting demo data. Use only with a disposable development database. Never run it against production or data you need to keep.
 
-After seeding, use the demo student/staff accounts printed by the script to sign in. Create an administrator separately through `/admin-register` using `ADMIN_REGISTRATION_CODE`.
+After seeding, use one of the demo user accounts printed by the script to sign in. Create an administrator separately through `/admin-register` using `ADMIN_REGISTRATION_CODE`.
 
 ## HTTP API
 
@@ -238,7 +242,7 @@ Authorization: Bearer <JWT>
 | Method | Path | Access | Purpose |
 | --- | --- | --- | --- |
 | `GET` | `/health` | Public | API health check. |
-| `POST` | `/auth/register` | Public | Register a student account. |
+| `POST` | `/auth/register` | Public | Register a user account. |
 | `POST` | `/auth/register-admin` | Registration code | Register an administrator, subject to the configured limit. |
 | `POST` | `/auth/login` | Public | Log in and receive a JWT. |
 | `GET` | `/auth/me` | Signed in | Read the current profile. |
@@ -246,28 +250,28 @@ Authorization: Bearer <JWT>
 | `GET` | `/departments` | Public | List active departments. |
 | `GET` | `/queue/display` | Public | Get data for the reception display. |
 | `GET` | `/queue/status/:departmentId` | Public | Read a department's queue status. |
-| `POST` | `/tokens` | Signed in | Create a token for a department (student workflow). |
-| `GET` | `/tokens/mine` | Signed in | List the current user's recent tokens. |
-| `GET` | `/tokens` | Staff/admin | List tokens with optional `status`, `department`, and `day` filters. |
-| `GET` | `/tokens/:id` | Signed in | Read a token; students can read only their own. |
-| `POST` | `/tokens/:id/cancel` | Signed in | Cancel an eligible token. |
+| `POST` | `/tokens` | User | Create a token for a department. |
+| `GET` | `/tokens/mine` | User | List the current user's recent tokens. |
+| `GET` | `/tokens` | Admin | List tokens with optional `status`, `department`, and `day` filters. |
+| `GET` | `/tokens/:id` | User/admin | Read a token; users can read only their own, admins can read any. |
+| `POST` | `/tokens/:id/cancel` | User/admin | Cancel an eligible token; users can cancel only their own. |
 | `PATCH` | `/tokens/:id/priority` | Admin | Change token priority and record a reason. |
-| `GET` | `/staff/queue` | Staff/admin | Read queue and counter status. |
-| `POST` | `/staff/call-next` | Staff/admin | Call the next token at the assigned counter. |
-| `POST` | `/staff/auto-call` | Staff/admin | Automatically allocate a token for a department. |
-| `POST` | `/staff/tokens/:id/:action` | Staff/admin | Perform a supported token lifecycle action. |
+| `GET` | `/admin/queue` | Admin | Read queue and counter status for the selected counter (`counterId`). |
+| `POST` | `/admin/queue/call-next` | Admin | Call the next token at the selected counter (`counterId`). |
+| `POST` | `/admin/queue/auto-call` | Admin | Automatically allocate a token for a department. |
+| `POST` | `/admin/queue/tokens/:id/:action` | Admin | Perform a supported token lifecycle action at the selected counter (`counterId`). |
 | `GET` | `/admin/users` | Admin | List users. |
-| `POST` | `/admin/users` | Admin | Create a student, staff, or administrator account. |
+| `POST` | `/admin/users` | Admin | Create a user or administrator account. |
 | `PATCH` | `/admin/users/:id` | Admin | Update a user's name, role, or active state. |
 | `GET` | `/admin/departments` | Admin | List all departments. |
 | `POST` | `/admin/departments` | Admin | Create a department. |
 | `PATCH` | `/admin/departments/:id` | Admin | Update a department. |
-| `GET` | `/admin/counters` | Staff/admin | List counters. |
+| `GET` | `/admin/counters` | Admin | List counters. |
 | `POST` | `/admin/counters` | Admin | Create a counter. |
-| `PATCH` | `/admin/counters/:id` | Admin | Update a counter or staff assignment. |
+| `PATCH` | `/admin/counters/:id` | Admin | Update a counter and its served departments. |
 | `GET` | `/admin/audit-logs` | Admin | Read recent audit records. |
-| `POST` | `/feedback` | Signed in | Submit a 1–5 rating for the user's completed token. |
-| `GET` | `/feedback/pending` | Signed in | List the user's completed tokens without feedback. |
+| `POST` | `/feedback` | User | Submit a 1–5 rating for the user's completed token. |
+| `GET` | `/feedback/pending` | User | List the user's completed tokens without feedback. |
 | `GET` | `/feedback` | Admin | Read feedback summary and recent comments. |
 | `POST` | `/chat` | Signed in | Ask the assistant; body accepts `{ "message": "...", "history": [] }`. |
 | `GET` | `/analytics` | Admin | Read date/department-filtered operational analytics. |
@@ -279,7 +283,7 @@ Authorization: Bearer <JWT>
 The frontend connects to Socket.IO through the Vite `/socket.io` proxy during development.
 
 - Authenticated users join their private `user:<id>` room.
-- Non-student users join the staff room.
+- Administrators join the queue-management Socket.IO room.
 - The public display joins the `display` room; department pages can join `dept:<departmentId>`.
 - Queue changes publish `queue:update`, `display:update`, and `token:update` events to the relevant rooms.
 - `notify` events provide in-app alerts and optional browser notifications.
@@ -308,5 +312,6 @@ The frontend build output is written to `frontend/dist`. Configure your producti
 - Use HTTPS in production and a strong, unique `JWT_SECRET`.
 - Set `CLIENT_URL` to the deployed frontend origin instead of relying on permissive development defaults.
 - Admin registration uses a shared secret; share it only with trusted administrators.
+- On startup, legacy `student` and `staff` account roles are migrated to `user`; old counter staff assignments are removed. Existing accounts retain their credentials and associated queue data.
 - The assistant does not execute queue actions; it only explains how to use the application.
 - Avoid running the demo seeder on any database containing data that must be retained.

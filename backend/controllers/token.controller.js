@@ -15,7 +15,7 @@ exports.mine = asyncHandler(async (req, res) => {
 exports.getOne = asyncHandler(async (req, res) => {
   const t = await Token.findById(req.params.id);
   if (!t) throw new HttpError(404, 'Token not found');
-  if (String(t.user) !== String(req.user._id) && req.user.role === 'student') throw new HttpError(403, 'Not your token');
+  if (String(t.user) !== String(req.user._id) && req.user.role !== 'admin') throw new HttpError(403, 'Not your token');
   res.json(await q.tokenView(t));
 });
 exports.listAll = asyncHandler(async (req, res) => {

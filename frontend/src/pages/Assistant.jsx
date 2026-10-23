@@ -50,7 +50,7 @@ export default function Assistant() {
         </div>
 
         <div className="border-t p-3" style={{ borderColor: 'var(--line)' }}>
-          {msgs.length <= 1 && <div className="mb-3 flex flex-wrap gap-2">{CHIPS.filter((c) => user.role === 'student' || !/my token/i.test(c)).map((c) => (
+          {msgs.length <= 1 && <div className="mb-3 flex flex-wrap gap-2">{CHIPS.filter((c) => user.role === 'user' || !/my token/i.test(c)).map((c) => (
             <button key={c} className="badge !px-3 !py-1.5 text-sm text-mute hover:text-ink" style={{ borderColor: 'var(--line)' }} onClick={() => send(c)}>{c}</button>))}</div>}
           <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex gap-2">
             <label htmlFor="chat" className="sr-only">Your question</label>

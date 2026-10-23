@@ -1,4 +1,4 @@
-// Creates demo staff/student accounts and queue data. Run: npm run seed (wipes existing app data!)
+// Creates demo user accounts and queue data. Run: npm run seed (wipes existing app data!)
 require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
@@ -20,17 +20,15 @@ const DailySequence = require('./models/DailySequence');
   ]);
   const d = Object.fromEntries(depts.map(x => [x.code, x._id]));
   const hash = (p) => bcrypt.hash(p, 10);
-  const users = await User.insertMany([
-    { name: 'Staff One', email: 'staff1@smartqueue.test', role: 'staff', passwordHash: await hash('Staff@123') },
-    { name: 'Staff Two', email: 'staff2@smartqueue.test', role: 'staff', passwordHash: await hash('Staff@123') },
-    { name: 'Demo Student', email: 'student@smartqueue.test', role: 'student', passwordHash: await hash('Student@123') },
-    { name: 'Demo Student 2', email: 'student2@smartqueue.test', role: 'student', passwordHash: await hash('Student@123') },
+  await User.insertMany([
+    { name: 'Demo User', email: 'user@smartqueue.test', role: 'user', passwordHash: await hash('User@123') },
+    { name: 'Demo User 2', email: 'user2@smartqueue.test', role: 'user', passwordHash: await hash('User@123') },
   ]);
   await Counter.insertMany([
-    { name: 'Counter 1', departments: [d.EX, d.AC], staff: users[0]._id },
-    { name: 'Counter 2', departments: [d.AD, d.LB, d.SH], staff: users[1]._id },
+    { name: 'Counter 1', departments: [d.EX, d.AC] },
+    { name: 'Counter 2', departments: [d.AD, d.LB, d.SH] },
     { name: 'Counter 3', departments: [d.EX, d.SH] },
   ]);
-  console.log('Seed complete (demo data). First create the admin account at /admin-register.\nAccounts:\n staff1@smartqueue.test / Staff@123\n staff2@smartqueue.test / Staff@123\n student@smartqueue.test / Student@123');
+  console.log('Seed complete (demo data). First create the admin account at /admin-register.\nAccounts:\n user@smartqueue.test / User@123\n user2@smartqueue.test / User@123');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

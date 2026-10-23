@@ -25,10 +25,10 @@ function Pending({ t, done }) {
 
 export default function Feedback() {
   const { user } = useAuth();
-  return user.role === 'admin' ? <AdminView /> : <StudentView />;
+  return user.role === 'admin' ? <AdminView /> : <UserView />;
 }
 
-function StudentView() {
+function UserView() {
   const { data, error, loading, reload } = useLoad(() => api.get('/feedback/pending'));
   return (<><PageTitle title="Feedback" sub="Rate the service you received." /><ErrorNote message={error} />
     {loading ? <Spinner /> : !data.length ? <Card><Empty title="Nothing to rate" hint="Completed tokens that need feedback show up here." /></Card>

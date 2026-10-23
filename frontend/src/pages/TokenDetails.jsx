@@ -45,7 +45,7 @@ export default function TokenDetails() {
 
           {t.status === 'CALLED' && <div className="mt-5 rounded-xl border border-cyan/40 bg-cyan/10 p-4 font-semibold" role="alert">Your token is called. Please go to {t.counter || 'the counter'}.</div>}
           {t.status === 'SERVING' && <div className="mt-5 rounded-xl border border-violet/40 bg-violet/10 p-4 font-semibold">You are being served at {t.counter}.</div>}
-          {t.status === 'ON_HOLD' && <div className="mt-5 rounded-xl border border-yellow-400/40 bg-yellow-400/10 p-4">Staff placed your token on hold. They will resume it shortly.</div>}
+          {t.status === 'ON_HOLD' && <div className="mt-5 rounded-xl border border-yellow-400/40 bg-yellow-400/10 p-4">The queue manager placed your token on hold. They will resume it shortly.</div>}
           {t.status === 'SKIPPED' && <div className="mt-5 rounded-xl border border-orange-400/40 bg-orange-400/10 p-4">You were not at the counter when called. Please contact the help desk.</div>}
 
           <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">

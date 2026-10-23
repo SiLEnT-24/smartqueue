@@ -36,7 +36,7 @@ export function Login({ adminOnly = false }) {
       title={adminOnly ? 'Administrator login' : 'Welcome back'}
       sub={adminOnly ? 'Sign in with your administrator account.' : 'Log in to see your queue.'}
       foot={adminOnly
-        ? <>Need an administrator account? <Link to="/admin-register" className="text-cyan underline">Register with the admin code</Link><br />Not an administrator? <Link to="/login" className="text-cyan underline">Regular login</Link></>
+        ? <>Need an administrator account? <Link to="/admin-register" className="text-cyan underline">Register with the admin code</Link><br />Not an administrator? <Link to="/login" className="text-cyan underline">User login</Link></>
         : <>New here? <Link to="/register" className="text-cyan underline">Create an account</Link><br />Administrator? <Link to="/admin-login" className="text-cyan underline">Admin login</Link></>}
     >
       <form onSubmit={submit} className="space-y-4">
@@ -63,7 +63,7 @@ export function Register({ adminOnly = false }) {
   return (
     <Shell
       title={adminOnly ? 'Create administrator account' : 'Create your account'}
-      sub={adminOnly ? 'Register one of up to five administrators with the shared registration code.' : 'Create a student account. Staff accounts are managed by an administrator.'}
+      sub={adminOnly ? 'Register one of up to five administrators with the shared registration code.' : 'Create a user account to join queues and track your tokens.'}
       foot={adminOnly
         ? <>Already have an administrator account? <Link to="/admin-login" className="text-cyan underline">Admin login</Link></>
         : <>Already registered? <Link to="/login" className="text-cyan underline">Log in</Link></>}

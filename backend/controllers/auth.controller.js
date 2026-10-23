@@ -11,8 +11,8 @@ const pub = (u) => ({ id: u._id, name: u.name, email: u.email, phone: u.phone ||
 exports.register = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
   if (!password || password.length < 6) throw new HttpError(400, 'Password must be at least 6 characters');
-  // Role is ALWAYS student on public registration. Staff/admin are created by an admin.
-  const user = await User.create({ name, email, passwordHash: await bcrypt.hash(password, 10), role: 'student' });
+  // Role is always user on public registration. Administrators use the protected registration flow.
+  const user = await User.create({ name, email, passwordHash: await bcrypt.hash(password, 10), role: 'user' });
   res.status(201).json({ token: sign(user), user: pub(user) });
 });
 

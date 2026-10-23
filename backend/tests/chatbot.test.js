@@ -18,11 +18,11 @@ test('assistant built-in answers use only supplied context and never claim to ac
   const { ruleBased } = require('../services/chatbot.service');
   const ctx = { myTokens: [{ tokenNumber: 'EX-004', department: 'Examination Cell', status: 'WAITING', position: 4, peopleAhead: 3, approxWaitMin: 8, counter: null }],
     departments: [{ name: 'Library', code: 'LB', waiting: 2, activeCounters: 1, approxWaitMin: 3, nowServing: [] }] };
-  assert.match(ruleBased('what is my token status', ctx, 'student'), /EX-004.*3 ahead/s);
-  assert.match(ruleBased('how do I cancel', ctx, 'student'), /Cancel token/);
-  assert.match(ruleBased('how do I rate a token', ctx, 'student'), /star rating from 1 to 5/);
-  assert.match(ruleBased('how do I turn on alerts', ctx, 'student'), /browser alerts.*Profile/s);
-  assert.match(ruleBased('how do I turn on alerts', ctx, 'student'), /cannot send email or SMS/);
-  assert.match(ruleBased('how long is the wait', { myTokens: [], departments: ctx.departments }, 'student'), /Library: 2 waiting/);
-  assert.match(ruleBased('zzzz qqqq', ctx, 'student'), /I don't know/);
+  assert.match(ruleBased('what is my token status', ctx, 'user'), /EX-004.*3 ahead/s);
+  assert.match(ruleBased('how do I cancel', ctx, 'user'), /Cancel token/);
+  assert.match(ruleBased('how do I rate a token', ctx, 'user'), /star rating from 1 to 5/);
+  assert.match(ruleBased('how do I turn on alerts', ctx, 'user'), /browser alerts.*Profile/s);
+  assert.match(ruleBased('how do I turn on alerts', ctx, 'user'), /cannot send email or SMS/);
+  assert.match(ruleBased('how long is the wait', { myTokens: [], departments: ctx.departments }, 'user'), /Library: 2 waiting/);
+  assert.match(ruleBased('zzzz qqqq', ctx, 'user'), /I don't know/);
 });

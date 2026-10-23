@@ -8,9 +8,7 @@ export default function CounterManagement() {
   const toast = useToast();
   const { data: counters, error, loading, reload } = useLoad(() => api.get('/admin/counters'));
   const { data: depts } = useLoad(() => api.get('/admin/departments'));
-  const { data: users } = useLoad(() => api.get('/admin/users'));
   const [name, setName] = useState(''); const [err, setErr] = useState('');
-  const staff = (users || []).filter((u) => u.role === 'staff' && u.active);
 
   const save = async (id, patch) => { setErr(''); try { await api.patch(`/admin/counters/${id}`, patch); toast('Counter updated', 'success'); reload(); } catch (e) { setErr(e.message); } };
   const add = async (e) => { e.preventDefault(); setErr(''); try { await api.post('/admin/counters', { name, departments: [] }); setName(''); toast('Counter created. Now choose its departments.', 'success'); reload(); } catch (e2) { setErr(e2.message); } };
@@ -18,7 +16,7 @@ export default function CounterManagement() {
 
   return (
     <>
-      <PageTitle title="Counters" sub="Choose which departments each counter serves and who staffs it." />
+      <PageTitle title="Counters" sub="Configure active counters and the departments they serve." />
       <ErrorNote message={error || err} />
       <Card className="mb-6"><form onSubmit={add} className="flex flex-wrap items-end gap-3">
         <div className="min-w-[200px] flex-1"><Field label="New counter name" id="cn"><input id="cn" className="input" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Counter 4" /></Field></div>
@@ -32,9 +30,6 @@ export default function CounterManagement() {
               <fieldset className="mb-4"><legend className="label">Departments served</legend>
                 <div className="flex flex-wrap gap-2">{(depts || []).filter((d) => d.active).map((d) => { const on = c.departments.some((x) => x._id === d._id); return (
                   <button key={d._id} type="button" aria-pressed={on} onClick={() => toggleDept(c, d._id)} className={`badge !px-3 !py-1.5 text-sm ${on ? 'border-cyan bg-cyan/15 text-cyan' : 'text-mute'}`} style={on ? {} : { borderColor: 'var(--line)' }}>{d.code}: {d.name}</button>); })}</div></fieldset>
-              <Field label="Assigned staff" id={`s${c._id}`}>
-                <select id={`s${c._id}`} className="input" value={c.staff?._id || ''} onChange={(e) => e.target.value && save(c._id, { staff: e.target.value })}>
-                  <option value="">{c.staff ? c.staff.name : 'Nobody assigned'}</option>{staff.filter((s) => s._id !== c.staff?._id).map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}</select></Field>
             </Card>))}
         </div>)}
     </>);

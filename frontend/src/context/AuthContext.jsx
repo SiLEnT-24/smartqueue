@@ -22,4 +22,4 @@ export function AuthProvider({ children }) {
   return <Ctx.Provider value={{ user, setUser, loading, login, register, registerAdmin, logout }}>{children}</Ctx.Provider>;
 }
 
-export const homeFor = (role) => ({ admin: '/app/admin', staff: '/app/staff' }[role] || '/app');
+export const homeFor = (role) => (role === 'admin' ? '/app/admin' : '/app');

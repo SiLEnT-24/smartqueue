@@ -5,6 +5,7 @@ import { useToast } from '../context/ThemeToast';
 import { useEvent } from '../context/SocketContext';
 import { Card, PageTitle, Spinner, ErrorNote, Empty, useLoad, Stat, StatusBadge, Field } from '../components/ui';
 import { useCallback } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const TABS = ['Overview', 'Departments', 'Users', 'Tokens', 'Audit log'];
 
@@ -27,7 +28,7 @@ function Overview() {
   const [summaryError, setSummaryError] = useState('');
   const [summaryLoading, setSummaryLoading] = useState(false);
   useEvent('queue:update', useCallback(() => reload(), []));
-  const autoCall = async (d) => { try { const r = await api.post('/staff/auto-call', { departmentId: d._id }); toast(r.token ? `${r.token.tokenNumber} called. ${r.message}` : 'Queue is empty', r.token ? 'success' : 'info'); reload(); } catch (e) { toast(e.message, 'error'); } };
+  const autoCall = async (d) => { try { const r = await api.post('/admin/queue/auto-call', { departmentId: d._id }); toast(r.token ? `${r.token.tokenNumber} called. ${r.message}` : 'Queue is empty', r.token ? 'success' : 'info'); reload(); } catch (e) { toast(e.message, 'error'); } };
   const generateSummary = async () => {
     setSummaryLoading(true); setSummaryError('');
     try { const result = await api.get('/analytics/summary'); setSummary(result.summary); }
@@ -84,20 +85,22 @@ function DeptCard({ d, save }) {
 
 function Users_() {
   const toast = useToast();
+  const { user: currentUser } = useAuth();
   const { data, error, loading, reload } = useLoad(() => api.get('/admin/users'));
-  const [f, setF] = useState({ name: '', email: '', password: '', role: 'staff' }); const [err, setErr] = useState('');
-  const add = async (e) => { e.preventDefault(); setErr(''); try { await api.post('/admin/users', f); setF({ name: '', email: '', password: '', role: 'staff' }); toast('User created', 'success'); reload(); } catch (e2) { setErr(e2.message); } };
+  const [f, setF] = useState({ name: '', email: '', password: '', role: 'user' }); const [err, setErr] = useState('');
+  const add = async (e) => { e.preventDefault(); setErr(''); try { await api.post('/admin/users', f); setF({ name: '', email: '', password: '', role: 'user' }); toast('Account created', 'success'); reload(); } catch (e2) { setErr(e2.message); } };
   const toggle = async (u) => { try { await api.patch(`/admin/users/${u._id}`, { active: !u.active }); reload(); } catch (e) { toast(e.message, 'error'); } };
+  const changeRole = async (u, role) => { try { await api.patch(`/admin/users/${u._id}`, { role }); toast('Account role updated', 'success'); reload(); } catch (e) { toast(e.message, 'error'); } };
   return (<>
     <ErrorNote message={error || err} />
     <Card className="mb-5"><form onSubmit={add} className="grid gap-3 sm:grid-cols-5">
       <Field label="Name" id="un"><input id="un" className="input" required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
       <Field label="Email" id="ue"><input id="ue" type="email" className="input" required value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
       <Field label="Password" id="up"><input id="up" type="password" minLength={6} className="input" required value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></Field>
-      <Field label="Role" id="ur"><select id="ur" className="input" value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })}><option value="staff">Staff</option><option value="admin">Admin</option><option value="student">Student</option></select></Field>
-      <div className="flex items-end"><button className="btn btn-primary w-full">Create user</button></div></form></Card>
+      <Field label="Role" id="ur"><select id="ur" className="input" value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })}><option value="user">User</option><option value="admin">Admin</option></select></Field>
+      <div className="flex items-end"><button className="btn btn-primary w-full">Create account</button></div></form></Card>
     {loading ? <Spinner /> : <Card className="overflow-x-auto !p-0"><table className="w-full text-left text-sm"><thead className="text-mute"><tr><th className="p-3">Name</th><th className="p-3">Email</th><th className="p-3">Role</th><th className="p-3">Status</th><th className="p-3" /></tr></thead>
-      <tbody>{data.map((u) => <tr key={u._id} className="border-t" style={{ borderColor: 'var(--line)' }}><td className="p-3">{u.name}</td><td className="p-3 text-mute">{u.email}</td><td className="p-3 capitalize">{u.role}</td><td className="p-3">{u.active ? 'Active' : 'Deactivated'}</td>
+      <tbody>{data.map((u) => <tr key={u._id} className="border-t" style={{ borderColor: 'var(--line)' }}><td className="p-3">{u.name}</td><td className="p-3 text-mute">{u.email}</td><td className="p-3"><select className="input !w-auto" aria-label={`Role for ${u.name}`} value={u.role} disabled={String(u._id) === String(currentUser.id)} onChange={(e) => changeRole(u, e.target.value)}><option value="user">User</option><option value="admin">Admin</option></select></td><td className="p-3">{u.active ? 'Active' : 'Deactivated'}</td>
         <td className="p-3 text-right"><button className="btn btn-ghost !py-1.5" onClick={() => toggle(u)}>{u.active ? 'Deactivate' : 'Activate'}</button></td></tr>)}</tbody></table></Card>}
   </>);
 }

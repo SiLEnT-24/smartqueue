@@ -95,7 +95,7 @@ test('admin registration requires the configured shared code and is capped at fi
       return { ok: true };
     };
     try {
-      assert.strictEqual(await sendTokenCreatedEmail('student@example.com', 'Student', {
+      assert.strictEqual(await sendTokenCreatedEmail('user@example.com', 'User', {
         tokenNumber: 'AD-012',
         department: { name: '<Admissions>' },
         estimatedWaitLabel: 'about 10 minutes',
@@ -104,7 +104,7 @@ test('admin registration requires the configured shared code and is capped at fi
       assert.strictEqual(request.options.headers['api-key'], 'test-api-key');
       const body = JSON.parse(request.options.body);
       assert.deepStrictEqual(body.sender, { email: 'verified@example.com', name: 'SmartQueue' });
-      assert.deepStrictEqual(body.to, [{ email: 'student@example.com', name: 'Student' }]);
+      assert.deepStrictEqual(body.to, [{ email: 'user@example.com', name: 'User' }]);
       assert.ok(body.htmlContent.includes('&lt;Admissions&gt;'));
     } finally {
       global.fetch = oldFetch;

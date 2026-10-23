@@ -84,7 +84,7 @@ async function broadcast(depId) {
   try {
     const status = await departmentStatus(depId);
     emitTo(`dept:${depId}`, 'queue:update', status);
-    emitTo('staff', 'queue:update', status);
+    emitTo('queue-managers', 'queue:update', status);
     emitTo('display', 'display:update', await displayData());
     const waiting = await Token.find({ department: depId, status: 'WAITING' });
     for (const t of waiting) {

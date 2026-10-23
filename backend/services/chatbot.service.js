@@ -14,7 +14,7 @@ async function buildContext(user) {
     const s = await q.departmentStatus(d._id);
     return { name: d.name, code: d.code, waiting: s.waitingCount, activeCounters: s.activeCounters, approxWaitMin: s.queueWaitMin, nowServing: s.nowServing.map((n) => n.tokenNumber) };
   }));
-  const mine = user.role === 'student' ? await Token.find({ user: user._id, status: { $in: ACTIVE } }) : [];
+  const mine = user.role === 'user' ? await Token.find({ user: user._id, status: { $in: ACTIVE } }) : [];
   const myTokens = await Promise.all(mine.map(async (t) => {
     const v = await q.tokenView(t);
     return { tokenNumber: v.tokenNumber, department: v.department.name, status: v.status, position: v.position, peopleAhead: v.peopleAhead, approxWaitMin: v.estimatedWaitMin, counter: v.counter };
@@ -25,7 +25,7 @@ async function buildContext(user) {
 const SUGGEST = 'You can ask: "What is my token status?", "How long is the wait?", "Which counters are open?" or "How do I get a token?"';
 
 // Pure function: easy to unit-test, needs no database.
-function ruleBased(message, ctx, role = 'student') {
+function ruleBased(message, ctx, role = 'user') {
   const t = String(message || '').toLowerCase();
   const has = (...ks) => ks.some((k) => t.includes(k));
   const tokens = ctx.myTokens || [];
@@ -37,7 +37,7 @@ function ruleBased(message, ctx, role = 'student') {
   if (has('feedback', 'rate ', 'rating', 'review')) return 'After a token is completed, open "Feedback" in the menu, pick a star rating from 1 to 5 and add an optional comment.';
   if (has('notif', 'alert', 'sms', 'email', 'remind')) return 'In-app alerts appear automatically. To turn on browser alerts, open Profile and enable browser notifications. I cannot send email or SMS.';
   if (has('my token', 'my turn', 'my position', 'my status', 'where am i', 'token status', 'my queue', 'status')) {
-    if (role !== 'student') return 'Token status is shown to students. Staff can see the queue on the "My counter" page and admins on the Overview page.';
+    if (role !== 'user') return 'Token status is shown to users. Administrators can manage queues from the administration pages.';
     if (!tokens.length) return 'You have no active token right now. Open "Get a token" to join a queue.';
     return tokens.map((x) => {
       if (x.status === 'WAITING') return `${x.tokenNumber} (${x.department}): waiting, position ${x.position}, ${x.peopleAhead} ahead, ${wait(x.approxWaitMin)} (approximate).`;

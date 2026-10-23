@@ -6,9 +6,8 @@ import { useTheme, useToast } from '../context/ThemeToast';
 import { useEvent } from '../context/SocketContext';
 
 const NAV = {
-  student: [['/app', 'My dashboard', LayoutDashboard, true], ['/app/new', 'Get a token', Ticket], ['/app/assistant', 'Assistant', Bot], ['/app/feedback', 'Feedback', MessageSquareHeart], ['/app/profile', 'Profile', UserCog]],
-  staff: [['/app/staff', 'My counter', ListOrdered, true], ['/app/assistant', 'Assistant', Bot], ['/app/profile', 'Profile', UserCog]],
-  admin: [['/app/admin', 'Overview', LayoutDashboard, true], ['/app/counters', 'Counters', Monitor], ['/app/analytics', 'Analytics', BarChart3], ['/app/assistant', 'Assistant', Bot], ['/app/feedback', 'Feedback', MessageSquareHeart], ['/app/profile', 'Profile', UserCog]],
+  user: [['/app', 'My dashboard', LayoutDashboard, true], ['/app/new', 'Get a token', Ticket], ['/app/assistant', 'Assistant', Bot], ['/app/feedback', 'Feedback', MessageSquareHeart], ['/app/profile', 'Profile', UserCog]],
+  admin: [['/app/admin', 'Overview', LayoutDashboard, true], ['/app/queue', 'Queue control', ListOrdered], ['/app/counters', 'Counters', Monitor], ['/app/analytics', 'Analytics', BarChart3], ['/app/assistant', 'Assistant', Bot], ['/app/feedback', 'Feedback', MessageSquareHeart], ['/app/profile', 'Profile', UserCog]],
 };
 
 // Turns socket "notify" events into in-app toasts (+ browser notification if the user allowed it)

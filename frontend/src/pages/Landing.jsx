@@ -19,7 +19,7 @@ const FEATURES = [
   [Bell, 'Alerts', 'In-app alerts, plus browser notifications once you allow them.'],
   [Tv, 'Reception display', 'A big-screen view for the waiting area with optional spoken announcements.'],
   [BarChart3, 'Analytics', 'Charts and CSV reports built from real token records.'],
-  [ShieldCheck, 'Role-based access', 'Students, counter staff and administrators each see only what they need.'],
+  [ShieldCheck, 'Role-based access', 'Users manage their own tokens while administrators control queues and settings.'],
 ];
 
 export default function Landing() {
@@ -88,8 +88,8 @@ export default function Landing() {
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-4 px-4 py-12 md:grid-cols-2">
-        {[['For students and visitors', ['No more guessing how long the line is', 'Wait anywhere and come back when your turn is near', 'Rate the service afterwards']],
-          ['For staff and administrators', ['One-click call, start, complete and skip', 'Fewer crowded corridors and disputes about who is next', 'Reports and feedback from real data']]].map(([t, items]) => (
+        {[['For users and visitors', ['No more guessing how long the line is', 'Wait anywhere and come back when your turn is near', 'Rate the service afterwards']],
+          ['For administrators', ['One-click call, start, complete and skip', 'Fewer crowded corridors and disputes about who is next', 'Reports and feedback from real data']]].map(([t, items]) => (
           <Card key={t}><h3 className="mb-3 text-lg font-semibold">{t}</h3>
             <ul className="space-y-2 text-sm">{items.map((x) => <li key={x} className="flex gap-2"><CheckCircle2 size={16} className="mt-0.5 shrink-0 text-emerald-400" />{x}</li>)}</ul></Card>))}
       </section>
