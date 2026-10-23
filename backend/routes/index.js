@@ -6,6 +6,7 @@ const staff = require('../controllers/staff.controller');
 const admin = require('../controllers/admin.controller');
 const fb = require('../controllers/feedback.controller');
 const an = require('../controllers/analytics.controller');
+const chat = require('../controllers/chat.controller');
 const A = requireRole('admin'), S = requireRole('staff', 'admin');
 
 // auth
@@ -50,6 +51,9 @@ router.get('/admin/audit-logs', protect, A, admin.auditLogs);
 router.post('/feedback', protect, fb.create);
 router.get('/feedback/pending', protect, fb.pending);
 router.get('/feedback', protect, A, fb.summary);
+
+// assistant
+router.post('/chat', protect, chat.send);
 
 // analytics + reports
 router.get('/analytics', protect, A, an.overview);

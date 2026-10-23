@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Activity, Bell, BarChart3, Tv, Gauge, ShieldCheck, Users, Sun, Moon, Ticket, Radio, CheckCircle2 } from 'lucide-react';
+import { Activity, Bell, BarChart3, Tv, Gauge, ShieldCheck, Users, Sun, Moon, Ticket, Radio, CheckCircle2, Bot } from 'lucide-react';
 import { useTheme } from '../context/ThemeToast';
+import { useAuth } from '../context/AuthContext';
 import { Card } from '../components/ui';
 
 // DEMO DATA ONLY: shown so visitors can see what a live queue looks like.
@@ -23,6 +24,7 @@ const FEATURES = [
 
 export default function Landing() {
   const { theme, toggle } = useTheme();
+  const { user } = useAuth();
   const [i, setI] = useState(0);
   useEffect(() => { const t = setInterval(() => setI((x) => x + 1), 3500); return () => clearInterval(t); }, []);
 
@@ -99,6 +101,15 @@ export default function Landing() {
         </Card>
       </section>
       <footer className="pb-8 text-center text-sm text-mute">SmartQueue, a B.Tech CSE project. Waiting times are estimates.</footer>
+      <Link
+        to={user ? '/app/assistant' : '/login'}
+        state={user ? undefined : { from: '/app/assistant' }}
+        className="fixed bottom-5 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-cyan text-slate-950 shadow-lg transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan focus-visible:ring-offset-2"
+        aria-label="Chat with the AI assistant"
+        title="Chat with the AI assistant"
+      >
+        <Bot size={24} />
+      </Link>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import Analytics from './pages/Analytics';
 import Feedback from './pages/Feedback';
 import Profile from './pages/Profile';
+import Assistant from './pages/Assistant';
 import NotFound from './pages/NotFound';
 
 const Guard = ({ roles, children }) => <ProtectedRoute roles={roles}>{children}</ProtectedRoute>;
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="counters" element={<Guard roles={['admin']}><CounterManagement /></Guard>} />
         <Route path="analytics" element={<Guard roles={['admin']}><Analytics /></Guard>} />
         <Route path="feedback" element={<Guard roles={['student', 'admin']}><Feedback /></Guard>} />
+        <Route path="assistant" element={<Assistant />} />
         <Route path="profile" element={<Profile />} />
         <Route path="home" element={<Home />} />
       </Route>

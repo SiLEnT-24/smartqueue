@@ -1,14 +1,14 @@
 import { useCallback, useRef, useState } from 'react';
 import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Ticket, MessageSquareHeart, UserCog, Tv, LogOut, Menu, X, Sun, Moon, BarChart3, Monitor, Building2, ListOrdered, Activity } from 'lucide-react';
+import { LayoutDashboard, Ticket, MessageSquareHeart, UserCog, Tv, LogOut, Menu, X, Sun, Moon, BarChart3, Monitor, Building2, ListOrdered, Activity, Bot } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme, useToast } from '../context/ThemeToast';
 import { useEvent } from '../context/SocketContext';
 
 const NAV = {
-  student: [['/app', 'My dashboard', LayoutDashboard, true], ['/app/new', 'Get a token', Ticket], ['/app/feedback', 'Feedback', MessageSquareHeart], ['/app/profile', 'Profile', UserCog]],
-  staff: [['/app/staff', 'My counter', ListOrdered, true], ['/app/profile', 'Profile', UserCog]],
-  admin: [['/app/admin', 'Overview', LayoutDashboard, true], ['/app/counters', 'Counters', Monitor], ['/app/analytics', 'Analytics', BarChart3], ['/app/feedback', 'Feedback', MessageSquareHeart], ['/app/profile', 'Profile', UserCog]],
+  student: [['/app', 'My dashboard', LayoutDashboard, true], ['/app/new', 'Get a token', Ticket], ['/app/assistant', 'Assistant', Bot], ['/app/feedback', 'Feedback', MessageSquareHeart], ['/app/profile', 'Profile', UserCog]],
+  staff: [['/app/staff', 'My counter', ListOrdered, true], ['/app/assistant', 'Assistant', Bot], ['/app/profile', 'Profile', UserCog]],
+  admin: [['/app/admin', 'Overview', LayoutDashboard, true], ['/app/counters', 'Counters', Monitor], ['/app/analytics', 'Analytics', BarChart3], ['/app/assistant', 'Assistant', Bot], ['/app/feedback', 'Feedback', MessageSquareHeart], ['/app/profile', 'Profile', UserCog]],
 };
 
 // Turns socket "notify" events into in-app toasts (+ browser notification if the user allowed it)
