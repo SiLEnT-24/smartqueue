@@ -137,21 +137,28 @@ async function generateToken(user, departmentId) {
   await token.save();
   await audit(user, 'TOKEN_CREATED', { token: token._id });
   await notifyUser(token, 'GENERATED', `Token ${token.tokenNumber} generated. Estimated wait ${view.estimatedWaitLabel}.`);
-  const notifications = {};
+  const notifications = {
+    emailSent: false,
+    emailStatus: 'not_configured',
+    smsSent: false,
+    smsStatus: !user.smsOptIn ? 'not_enabled' : user.phone ? 'not_configured' : 'phone_missing',
+  };
   try {
     const emailSent = await sendTokenCreatedEmail(user.email, user.name, view);
-    if (emailSent !== null) notifications.emailSent = emailSent;
+    notifications.emailSent = emailSent === true;
+    notifications.emailStatus = emailSent === null ? 'not_configured' : emailSent ? 'sent' : 'failed';
   } catch (error) {
     console.error(`Email notification failed for token ${token._id}:`, error.message);
-    notifications.emailSent = false;
+    notifications.emailStatus = 'failed';
   }
   if (user.smsOptIn && user.phone) {
     try {
       const smsSent = await sendTokenCreatedSms(user.phone, view);
-      if (smsSent !== null) notifications.smsSent = smsSent;
+      notifications.smsSent = smsSent === true;
+      notifications.smsStatus = smsSent === null ? 'not_configured' : smsSent ? 'sent' : 'failed';
     } catch (error) {
       console.error(`SMS notification failed for token ${token._id}:`, error.message);
-      notifications.smsSent = false;
+      notifications.smsStatus = 'failed';
     }
   }
   await broadcast(dept._id);

@@ -122,9 +122,15 @@ npm run build
 
 For Vercel, set the project **Root Directory** to `backend` so its Node function
 configuration and dependencies are used. Set `MONGO_URI`, `JWT_SECRET`,
-`CLIENT_URL`, and (to email users when their token is called) `BREVO_API_KEY`,
-`BREVO_SENDER_EMAIL`, and `BREVO_SENDER_NAME` in the deployment environment.
-The sender address must be verified with Brevo.
+`CLIENT_URL`, `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, and `BREVO_SENDER_NAME` in
+the deployment environment to email users when they create a token or an admin
+calls it. The sender address must be verified with Brevo.
+
+To send token-creation SMS, also set `BREVO_SMS_SENDER`. Each user must save a
+phone number in E.164 format and enable SMS in their profile; SMS is not sent
+without that explicit opt-in. The token creation response includes `emailSent`
+and `smsSent` plus status fields (`sent`, `not_configured`, `not_enabled`,
+`phone_missing`, or `failed`) so delivery setup issues are visible to the client.
 
 The Express API and transactional email work in Vercel functions, but Vercel
 functions do not provide a persistent Socket.IO server. The live `notify` and
