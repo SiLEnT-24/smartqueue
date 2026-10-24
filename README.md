@@ -120,19 +120,19 @@ npm run build
 
 ## Deployment
 
-For Vercel, set the project **Root Directory** to `backend` so its Node function
-configuration and dependencies are used. Set `MONGO_URI`, `JWT_SECRET`,
+For Vercel, set the project **Root Directory** to `backend` so it detects the
+Node application and installs its dependencies. Set `MONGO_URI`, `JWT_SECRET`,
 `CLIENT_URL`, `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, and `BREVO_SENDER_NAME` in
 the deployment environment to email users when they create a token or an admin
 calls it. On token creation, the same email provider also notifies all active
 admin accounts registered in the database. The sender address must be verified
 with Brevo.
 
-The backend's `vercel.json` intentionally uses Vercel's automatic framework
-detection so the project's Build and Development Settings remain active. If
-Vercel reports `Unknown env config "cache-dir"` during install, remove the
-`NPM_CONFIG_CACHE_DIR` (or `npm_config_cache_dir`) environment variable from
-the Vercel project's Environment Variables; npm uses `cache`, not `cache-dir`.
+The backend uses Vercel's automatic framework detection so the project's Build
+and Development Settings remain active. If Vercel reports `Unknown env config
+"cache-dir"` during install, remove the `NPM_CONFIG_CACHE_DIR` (or
+`npm_config_cache_dir`) environment variable from the Vercel project's
+Environment Variables; npm uses `cache`, not `cache-dir`.
 
 To send token-creation SMS, also set `BREVO_SMS_SENDER`. Each user must save a
 phone number in E.164 format and enable SMS in their profile; SMS is not sent
