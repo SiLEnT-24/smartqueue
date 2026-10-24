@@ -118,6 +118,20 @@ cd frontend
 npm run build
 ```
 
+## Deployment
+
+For Vercel, set the project **Root Directory** to `backend` so its Node function
+configuration and dependencies are used. Set `MONGO_URI`, `JWT_SECRET`,
+`CLIENT_URL`, and (to email users when their token is called) `BREVO_API_KEY`,
+`BREVO_SENDER_EMAIL`, and `BREVO_SENDER_NAME` in the deployment environment.
+The sender address must be verified with Brevo.
+
+The Express API and transactional email work in Vercel functions, but Vercel
+functions do not provide a persistent Socket.IO server. The live `notify` and
+`token:update` events require deployment on a long-running Node.js host; without
+that, users can still see their updated token status by refreshing or fetching
+their token, and will receive the call email when Brevo is configured.
+
 ## Security Notes
 
 - Keep API keys and environment variables private.

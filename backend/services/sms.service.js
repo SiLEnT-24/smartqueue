@@ -2,6 +2,10 @@ function buildTokenCreatedMessage(token) {
   return `SmartQueue: token ${token.tokenNumber} created for ${token.department.name}. Estimated wait: ${token.estimatedWaitLabel}.`;
 }
 
+function buildTokenCalledMessage(token) {
+  return `SmartQueue: token ${token.tokenNumber} for ${token.department.name} is called. Please go to ${token.counter || 'the counter'}.`;
+}
+
 function htmlEscape(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -50,6 +54,25 @@ async function sendTokenCreatedEmail(email, name, token) {
   }, 'email');
 }
 
+async function sendTokenCalledEmail(email, name, token) {
+  const senderEmail = process.env.BREVO_SENDER_EMAIL;
+  const senderName = process.env.BREVO_SENDER_NAME;
+  if (!process.env.BREVO_API_KEY && !senderEmail && !senderName) return null;
+  if (!process.env.BREVO_API_KEY || !senderEmail || !senderName)
+    throw new Error('Brevo email configuration is incomplete');
+
+  const escapedToken = htmlEscape(token.tokenNumber);
+  const escapedDepartment = htmlEscape(token.department.name);
+  const escapedCounter = htmlEscape(token.counter || 'the counter');
+  return sendBrevoRequest('smtp/email', {
+    sender: { email: senderEmail, name: senderName },
+    to: [{ email, ...(name && { name }) }],
+    subject: `Your SmartQueue token ${token.tokenNumber} is called`,
+    textContent: buildTokenCalledMessage(token),
+    htmlContent: `<p>Your SmartQueue token <strong>${escapedToken}</strong> for ${escapedDepartment} is called.</p><p>Please go to ${escapedCounter}.</p>`,
+  }, 'email');
+}
+
 async function sendTokenCreatedSms(phone, token) {
   const sender = process.env.BREVO_SMS_SENDER;
   if (!process.env.BREVO_API_KEY && !sender) return null;
@@ -63,4 +86,10 @@ async function sendTokenCreatedSms(phone, token) {
   }, 'SMS');
 }
 
-module.exports = { buildTokenCreatedMessage, sendTokenCreatedEmail, sendTokenCreatedSms };
+module.exports = {
+  buildTokenCreatedMessage,
+  buildTokenCalledMessage,
+  sendTokenCreatedEmail,
+  sendTokenCalledEmail,
+  sendTokenCreatedSms,
+};
