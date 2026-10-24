@@ -47,6 +47,23 @@ test('call email body includes the token, department, and counter', () => {
   }), 'SmartQueue: token AD-012 for Admissions is called. Please go to Counter 3.');
 });
 
+test('token email is marked unconfigured when no provider credentials are set', async () => {
+  const oldEnv = Object.fromEntries(['BREVO_API_KEY', 'BREVO_SENDER_EMAIL', 'BREVO_SENDER_NAME'].map((key) => [key, process.env[key]]));
+  for (const key of Object.keys(oldEnv)) delete process.env[key];
+  try {
+    assert.strictEqual(await sendTokenCreatedEmail('user@example.com', 'User', {
+      tokenNumber: 'AD-012',
+      department: { name: 'Admissions' },
+      estimatedWaitLabel: 'about 10 minutes',
+    }), null);
+  } finally {
+    for (const [key, value] of Object.entries(oldEnv)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
+
 test('admin registration requires the configured shared code and is capped at five admins', () => {
   const oldCode = process.env.ADMIN_REGISTRATION_CODE;
   process.env.ADMIN_REGISTRATION_CODE = 'private-registration-code';
@@ -120,6 +137,35 @@ test('admin registration requires the configured shared code and is capped at fi
       assert.deepStrictEqual(body.sender, { email: 'verified@example.com', name: 'SmartQueue' });
       assert.deepStrictEqual(body.to, [{ email: 'user@example.com', name: 'User' }]);
       assert.ok(body.htmlContent.includes('&lt;Admissions&gt;'));
+    } finally {
+      global.fetch = oldFetch;
+      for (const [key, value] of Object.entries(oldEnv)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
+  });
+
+  test('Brevo email rejection includes the provider reason', async () => {
+    const oldFetch = global.fetch;
+    const oldEnv = Object.fromEntries(['BREVO_API_KEY', 'BREVO_SENDER_EMAIL', 'BREVO_SENDER_NAME'].map((key) => [key, process.env[key]]));
+    process.env.BREVO_API_KEY = 'test-api-key';
+    process.env.BREVO_SENDER_EMAIL = 'verified@example.com';
+    process.env.BREVO_SENDER_NAME = 'SmartQueue';
+    global.fetch = async () => ({
+      ok: false,
+      status: 401,
+      json: async () => ({ message: 'Invalid API key' }),
+    });
+    try {
+      await assert.rejects(
+        sendTokenCreatedEmail('user@example.com', 'User', {
+          tokenNumber: 'AD-012',
+          department: { name: 'Admissions' },
+          estimatedWaitLabel: 'about 10 minutes',
+        }),
+        /Brevo rejected the email request \(HTTP 401\): Invalid API key/,
+      );
     } finally {
       global.fetch = oldFetch;
       for (const [key, value] of Object.entries(oldEnv)) {

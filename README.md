@@ -128,9 +128,10 @@ calls it. The sender address must be verified with Brevo.
 
 To send token-creation SMS, also set `BREVO_SMS_SENDER`. Each user must save a
 phone number in E.164 format and enable SMS in their profile; SMS is not sent
-without that explicit opt-in. The token creation response includes `emailSent`
-and `smsSent` plus status fields (`sent`, `not_configured`, `not_enabled`,
-`phone_missing`, or `failed`) so delivery setup issues are visible to the client.
+without that explicit opt-in. The token creation response includes `emailSent` and `smsSent` plus status
+fields (`sent`, `not_configured`, `not_enabled`, `phone_missing`, or `failed`).
+When Brevo rejects an email, `emailError` includes its reason (for example,
+invalid API key or sender configuration), and the server logs the failure.
 
 The Express API and transactional email work in Vercel functions, but Vercel
 functions do not provide a persistent Socket.IO server. The live `notify` and

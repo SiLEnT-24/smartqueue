@@ -31,7 +31,16 @@ async function sendBrevoRequest(endpoint, body, channel) {
   } catch (error) {
     throw new Error(error.name === 'TimeoutError' ? `Brevo ${channel} request timed out` : `could not reach Brevo for ${channel}`);
   }
-  if (!response.ok) throw new Error(`Brevo rejected the ${channel} request (HTTP ${response.status})`);
+  if (!response.ok) {
+    let reason = '';
+    try {
+      const body = await response.json();
+      reason = body.message || body.code || '';
+    } catch {
+      reason = 'provider response could not be parsed';
+    }
+    throw new Error(`Brevo rejected the ${channel} request (HTTP ${response.status})${reason ? `: ${reason}` : ''}`);
+  }
   return true;
 }
 

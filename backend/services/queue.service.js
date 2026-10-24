@@ -140,6 +140,7 @@ async function generateToken(user, departmentId) {
   const notifications = {
     emailSent: false,
     emailStatus: 'not_configured',
+    emailError: null,
     smsSent: false,
     smsStatus: !user.smsOptIn ? 'not_enabled' : user.phone ? 'not_configured' : 'phone_missing',
   };
@@ -147,9 +148,11 @@ async function generateToken(user, departmentId) {
     const emailSent = await sendTokenCreatedEmail(user.email, user.name, view);
     notifications.emailSent = emailSent === true;
     notifications.emailStatus = emailSent === null ? 'not_configured' : emailSent ? 'sent' : 'failed';
+    if (emailSent === null) notifications.emailError = 'Email provider is not configured on the server.';
   } catch (error) {
     console.error(`Email notification failed for token ${token._id}:`, error.message);
     notifications.emailStatus = 'failed';
+    notifications.emailError = error.message;
   }
   if (user.smsOptIn && user.phone) {
     try {
