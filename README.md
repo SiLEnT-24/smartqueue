@@ -128,6 +128,12 @@ calls it. On token creation, the same email provider also notifies all active
 admin accounts registered in the database. The sender address must be verified
 with Brevo.
 
+The backend's `vercel.json` intentionally uses Vercel's automatic framework
+detection so the project's Build and Development Settings remain active. If
+Vercel reports `Unknown env config "cache-dir"` during install, remove the
+`NPM_CONFIG_CACHE_DIR` (or `npm_config_cache_dir`) environment variable from
+the Vercel project's Environment Variables; npm uses `cache`, not `cache-dir`.
+
 To send token-creation SMS, also set `BREVO_SMS_SENDER`. Each user must save a
 phone number in E.164 format and enable SMS in their profile; SMS is not sent
 without that explicit opt-in. The token creation response includes `emailSent`, `adminEmailsSent`, and
