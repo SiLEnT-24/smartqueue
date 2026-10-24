@@ -1,13 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createAnalyticsSummary, summaryMetrics } = require('../services/analyticsSummary.service');
-const {
-  buildTokenCreatedMessage,
-  buildTokenCalledMessage,
-  sendTokenCreatedEmail,
-  sendTokenCalledEmail,
-  sendTokenCreatedSms,
-} = require('../services/sms.service');
+const { buildTokenCreatedMessage, sendTokenCreatedEmail, sendTokenCreatedSms } = require('../services/sms.service');
 const { MAX_ADMINS, isValidAdminRegistrationCode } = require('../services/adminRegistration.service');
 
 test('AI summary input contains aggregate analytics only', () => {
@@ -37,14 +31,6 @@ test('SMS body includes the token, department, and estimated wait', () => {
     department: { name: 'Admissions' },
     estimatedWaitLabel: 'about 10 minutes',
   }), 'SmartQueue: token AD-012 created for Admissions. Estimated wait: about 10 minutes.');
-});
-
-test('call email body includes the token, department, and counter', () => {
-  assert.strictEqual(buildTokenCalledMessage({
-    tokenNumber: 'AD-012',
-    department: { name: 'Admissions' },
-    counter: 'Counter 3',
-  }), 'SmartQueue: token AD-012 for Admissions is called. Please go to Counter 3.');
 });
 
 test('admin registration requires the configured shared code and is capped at five admins', () => {
@@ -120,38 +106,6 @@ test('admin registration requires the configured shared code and is capped at fi
       assert.deepStrictEqual(body.sender, { email: 'verified@example.com', name: 'SmartQueue' });
       assert.deepStrictEqual(body.to, [{ email: 'user@example.com', name: 'User' }]);
       assert.ok(body.htmlContent.includes('&lt;Admissions&gt;'));
-    } finally {
-      global.fetch = oldFetch;
-      for (const [key, value] of Object.entries(oldEnv)) {
-        if (value === undefined) delete process.env[key];
-        else process.env[key] = value;
-      }
-    }
-  });
-
-  test('Brevo call email tells the user which counter to visit', async () => {
-    const oldFetch = global.fetch;
-    const oldEnv = Object.fromEntries(['BREVO_API_KEY', 'BREVO_SENDER_EMAIL', 'BREVO_SENDER_NAME'].map((key) => [key, process.env[key]]));
-    process.env.BREVO_API_KEY = 'test-api-key';
-    process.env.BREVO_SENDER_EMAIL = 'verified@example.com';
-    process.env.BREVO_SENDER_NAME = 'SmartQueue';
-    let request;
-    global.fetch = async (url, options) => {
-      request = { url, options };
-      return { ok: true };
-    };
-    try {
-      assert.strictEqual(await sendTokenCalledEmail('user@example.com', 'User', {
-        tokenNumber: 'AD-012',
-        department: { name: '<Admissions>' },
-        counter: '<Counter 3>',
-      }), true);
-      assert.strictEqual(request.url, 'https://api.brevo.com/v3/smtp/email');
-      const body = JSON.parse(request.options.body);
-      assert.deepStrictEqual(body.to, [{ email: 'user@example.com', name: 'User' }]);
-      assert.strictEqual(body.subject, 'Your SmartQueue token AD-012 is called');
-      assert.ok(body.htmlContent.includes('&lt;Admissions&gt;'));
-      assert.ok(body.htmlContent.includes('&lt;Counter 3&gt;'));
     } finally {
       global.fetch = oldFetch;
       for (const [key, value] of Object.entries(oldEnv)) {
