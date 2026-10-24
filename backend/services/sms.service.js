@@ -117,6 +117,19 @@ async function sendTokenCreatedSms(phone, token) {
   }, 'SMS');
 }
 
+async function sendTokenCalledSms(phone, token) {
+  const sender = process.env.BREVO_SMS_SENDER;
+  if (!process.env.BREVO_API_KEY && !sender) return null;
+  if (!process.env.BREVO_API_KEY || !sender) throw new Error('Brevo SMS configuration is incomplete');
+
+  return sendBrevoRequest('transactionalSMS/sms', {
+    sender,
+    recipient: phone,
+    content: buildTokenCalledMessage(token),
+    type: 'transactional',
+  }, 'SMS');
+}
+
 module.exports = {
   buildTokenCreatedMessage,
   buildTokenCalledMessage,
@@ -124,4 +137,5 @@ module.exports = {
   sendTokenCreatedAdminEmail,
   sendTokenCalledEmail,
   sendTokenCreatedSms,
+  sendTokenCalledSms,
 };

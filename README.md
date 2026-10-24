@@ -134,11 +134,12 @@ and Development Settings remain active. If Vercel reports `Unknown env config
 `npm_config_cache_dir`) environment variable from the Vercel project's
 Environment Variables; npm uses `cache`, not `cache-dir`.
 
-To send token-creation SMS, also set `BREVO_SMS_SENDER`. Each user must save a
-phone number in E.164 format and enable SMS in their profile; SMS is not sent
-without that explicit opt-in. The token creation response includes `emailSent`, `adminEmailsSent`, and
-`smsSent`, plus status fields (`sent`, `not_configured`, `not_enabled`,
-`phone_missing`, `no_admins`, or `failed`).
+To send SMS for token creation and when an admin calls a token, also set
+`BREVO_SMS_SENDER`. Each user must save a phone number in E.164 format and
+enable SMS in their profile; SMS is not sent without that explicit opt-in.
+Token creation and call responses include email and SMS delivery status fields
+(`sent`, `not_configured`, `not_enabled`, `phone_missing`, `no_admins`, or
+`failed`), with error details when delivery fails.
 When Brevo rejects an email, `emailError` includes its reason (for example,
 invalid API key or sender configuration); `adminEmailError` reports admin
 notification failures, and the server logs the failure.

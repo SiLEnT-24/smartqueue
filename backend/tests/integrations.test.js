@@ -8,6 +8,7 @@ const {
   sendTokenCreatedAdminEmail,
   sendTokenCalledEmail,
   sendTokenCreatedSms,
+  sendTokenCalledSms,
 } = require('../services/sms.service');
 const { MAX_ADMINS, isValidAdminRegistrationCode } = require('../services/adminRegistration.service');
 
@@ -241,6 +242,35 @@ test('admin registration requires the configured shared code and is capped at fi
       assert.strictEqual(body.subject, 'Your SmartQueue token AD-012 is called');
       assert.ok(body.htmlContent.includes('&lt;Admissions&gt;'));
       assert.ok(body.htmlContent.includes('&lt;Counter 3&gt;'));
+    } finally {
+      global.fetch = oldFetch;
+      for (const [key, value] of Object.entries(oldEnv)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
+  });
+
+  test('Brevo call SMS tells the user which counter to visit', async () => {
+    const oldFetch = global.fetch;
+    const oldEnv = Object.fromEntries(['BREVO_API_KEY', 'BREVO_SMS_SENDER'].map((key) => [key, process.env[key]]));
+    process.env.BREVO_API_KEY = 'test-api-key';
+    process.env.BREVO_SMS_SENDER = 'SmartQ';
+    let request;
+    global.fetch = async (url, options) => {
+      request = { url, options };
+      return { ok: true };
+    };
+    try {
+      assert.strictEqual(await sendTokenCalledSms('+14155552671', {
+        tokenNumber: 'AD-012',
+        department: { name: 'Admissions' },
+        counter: 'Counter 3',
+      }), true);
+      assert.strictEqual(request.url, 'https://api.brevo.com/v3/transactionalSMS/sms');
+      const body = JSON.parse(request.options.body);
+      assert.strictEqual(body.recipient, '+14155552671');
+      assert.strictEqual(body.content, 'SmartQueue: token AD-012 for Admissions is called. Please go to Counter 3.');
     } finally {
       global.fetch = oldFetch;
       for (const [key, value] of Object.entries(oldEnv)) {

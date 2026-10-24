@@ -13,6 +13,7 @@ const {
   sendTokenCreatedAdminEmail,
   sendTokenCalledEmail,
   sendTokenCreatedSms,
+  sendTokenCalledSms,
 } = require('./sms.service');
 
 // Allowed lifecycle moves. Anything not listed here is rejected by the server.
@@ -151,6 +152,7 @@ async function generateToken(user, departmentId) {
     adminEmailError: null,
     smsSent: false,
     smsStatus: !user.smsOptIn ? 'not_enabled' : user.phone ? 'not_configured' : 'phone_missing',
+    smsError: null,
   };
   try {
     const emailSent = await sendTokenCreatedEmail(user.email, user.name, view);
@@ -185,6 +187,7 @@ async function generateToken(user, departmentId) {
     } catch (error) {
       console.error(`SMS notification failed for token ${token._id}:`, error.message);
       notifications.smsStatus = 'failed';
+      notifications.smsError = error.message;
     }
   }
   await broadcast(dept._id);
@@ -232,15 +235,53 @@ async function transition(tokenId, to, actor, { counterId = null, note = '' } = 
   await broadcast(updated.department);
   if (to !== 'CALLED') return view;
 
+  const notifications = {
+    emailSent: false,
+    emailStatus: 'not_configured',
+    emailError: null,
+    smsSent: false,
+    smsStatus: 'not_enabled',
+    smsError: null,
+  };
+  let user;
   try {
-    const user = await User.findById(updated.user).select('name email');
+    user = await User.findById(updated.user).select('name email phone smsOptIn');
     if (!user) throw new Error('Token owner not found');
+  } catch (error) {
+    console.error(`Call notification recipient lookup failed for token ${updated._id}:`, error.message);
+    notifications.emailStatus = 'failed';
+    notifications.emailError = error.message;
+    notifications.smsStatus = 'failed';
+    notifications.smsError = error.message;
+    return { ...view, ...notifications };
+  }
+  try {
     const emailSent = await sendTokenCalledEmail(user.email, user.name, view);
-    return { ...view, emailSent: emailSent === true };
+    notifications.emailSent = emailSent === true;
+    notifications.emailStatus = emailSent === null ? 'not_configured' : emailSent ? 'sent' : 'failed';
+    if (emailSent === null) notifications.emailError = 'Email provider is not configured on the server.';
   } catch (error) {
     console.error(`Call email notification failed for token ${updated._id}:`, error.message);
-    return { ...view, emailSent: false };
+    notifications.emailStatus = 'failed';
+    notifications.emailError = error.message;
   }
+  if (!user.smsOptIn) {
+    notifications.smsStatus = 'not_enabled';
+  } else if (!user.phone) {
+    notifications.smsStatus = 'phone_missing';
+  } else {
+    try {
+      const smsSent = await sendTokenCalledSms(user.phone, view);
+      notifications.smsSent = smsSent === true;
+      notifications.smsStatus = smsSent === null ? 'not_configured' : smsSent ? 'sent' : 'failed';
+      if (smsSent === null) notifications.smsError = 'SMS provider is not configured on the server.';
+    } catch (error) {
+      console.error(`Call SMS notification failed for token ${updated._id}:`, error.message);
+      notifications.smsStatus = 'failed';
+      notifications.smsError = error.message;
+    }
+  }
+  return { ...view, ...notifications };
 }
 
 async function cancelToken(user, tokenId) {
