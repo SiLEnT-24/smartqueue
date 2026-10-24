@@ -1,13 +1,14 @@
 const Token = require('../models/Token');
 const Counter = require('../models/Counter');
 const Department = require('../models/Department');
+const User = require('../models/User');
 const DailySequence = require('../models/DailySequence');
 const AuditLog = require('../models/AuditLog');
 const HttpError = require('../utils/httpError');
 const { dayKey } = require('../utils/dates');
 const { emitTo } = require('../utils/socket');
 const est = require('./estimate.service');
-const { sendTokenCreatedEmail, sendTokenCreatedSms } = require('./sms.service');
+const { sendTokenCreatedEmail, sendTokenCalledEmail, sendTokenCreatedSms } = require('./sms.service');
 
 // Allowed lifecycle moves. Anything not listed here is rejected by the server.
 const TRANSITIONS = {
@@ -96,8 +97,8 @@ async function broadcast(depId) {
   } catch (e) { console.error('broadcast failed:', e.message); }
 }
 
-async function notifyUser(token, type, message) {
-  emitTo(`user:${token.user}`, 'token:update', await tokenView(token));
+async function notifyUser(token, type, message, view) {
+  emitTo(`user:${token.user}`, 'token:update', view || await tokenView(token));
   emitTo(`user:${token.user}`, 'notify', { type, message });
 }
 
@@ -193,9 +194,22 @@ async function transition(tokenId, to, actor, { counterId = null, note = '' } = 
     CANCELLED: `${updated.tokenNumber} cancelled.`, ON_HOLD: `${updated.tokenNumber} is on hold.`,
     WAITING: `${updated.tokenNumber} is back in the queue.`,
   };
-  await notifyUser(updated, to, msgs[to]);
+  const view = await tokenView(updated);
+  await notifyUser(updated, to, msgs[to], view);
   await broadcast(updated.department);
-  return tokenView(updated);
+  const notifications = {};
+  if (to === 'CALLED') {
+    try {
+      const user = await User.findById(updated.user).select('name email');
+      if (!user) throw new Error('Token owner not found');
+      const emailSent = await sendTokenCalledEmail(user.email, user.name, view);
+      notifications.emailSent = emailSent === true;
+    } catch (error) {
+      console.error(`Call email notification failed for token ${updated._id}:`, error.message);
+      notifications.emailSent = false;
+    }
+  }
+  return { ...view, ...notifications };
 }
 
 async function cancelToken(user, tokenId) {
