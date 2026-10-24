@@ -22,7 +22,7 @@ router.get('/queue/display', tok.display);
 router.get('/queue/status/:departmentId', tok.departmentStatus);
 
 // tokens
-router.post('/tokens', protect, requireRole('user'), tok.create);
+router.post('/tokens', protect, requireRole('user', 'admin'), tok.create);
 router.get('/tokens/mine', protect, requireRole('user'), tok.mine);
 router.get('/tokens', protect, A, tok.listAll);
 router.get('/tokens/:id', protect, tok.getOne);

@@ -21,3 +21,16 @@ test('administrator routes reject users and accept administrators', () => {
   });
   assert.equal(adminNext, true);
 });
+
+test('token creation is available to both authenticated users and administrators', () => {
+  const allowTokenCreation = requireRole('user', 'admin');
+
+  for (const role of ['user', 'admin']) {
+    let nextCalled = false;
+    allowTokenCreation({ user: { role } }, {}, (error) => {
+      assert.equal(error, undefined);
+      nextCalled = true;
+    });
+    assert.equal(nextCalled, true);
+  }
+});
