@@ -124,14 +124,18 @@ For Vercel, set the project **Root Directory** to `backend` so its Node function
 configuration and dependencies are used. Set `MONGO_URI`, `JWT_SECRET`,
 `CLIENT_URL`, `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, and `BREVO_SENDER_NAME` in
 the deployment environment to email users when they create a token or an admin
-calls it. The sender address must be verified with Brevo.
+calls it. On token creation, the same email provider also notifies all active
+admin accounts registered in the database. The sender address must be verified
+with Brevo.
 
 To send token-creation SMS, also set `BREVO_SMS_SENDER`. Each user must save a
 phone number in E.164 format and enable SMS in their profile; SMS is not sent
-without that explicit opt-in. The token creation response includes `emailSent` and `smsSent` plus status
-fields (`sent`, `not_configured`, `not_enabled`, `phone_missing`, or `failed`).
+without that explicit opt-in. The token creation response includes `emailSent`, `adminEmailsSent`, and
+`smsSent`, plus status fields (`sent`, `not_configured`, `not_enabled`,
+`phone_missing`, `no_admins`, or `failed`).
 When Brevo rejects an email, `emailError` includes its reason (for example,
-invalid API key or sender configuration), and the server logs the failure.
+invalid API key or sender configuration); `adminEmailError` reports admin
+notification failures, and the server logs the failure.
 
 The Express API and transactional email work in Vercel functions, but Vercel
 functions do not provide a persistent Socket.IO server. The live `notify` and

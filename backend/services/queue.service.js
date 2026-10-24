@@ -8,7 +8,12 @@ const HttpError = require('../utils/httpError');
 const { dayKey } = require('../utils/dates');
 const { emitTo } = require('../utils/socket');
 const est = require('./estimate.service');
-const { sendTokenCreatedEmail, sendTokenCalledEmail, sendTokenCreatedSms } = require('./sms.service');
+const {
+  sendTokenCreatedEmail,
+  sendTokenCreatedAdminEmail,
+  sendTokenCalledEmail,
+  sendTokenCreatedSms,
+} = require('./sms.service');
 
 // Allowed lifecycle moves. Anything not listed here is rejected by the server.
 const TRANSITIONS = {
@@ -141,6 +146,9 @@ async function generateToken(user, departmentId) {
     emailSent: false,
     emailStatus: 'not_configured',
     emailError: null,
+    adminEmailsSent: false,
+    adminEmailStatus: 'not_configured',
+    adminEmailError: null,
     smsSent: false,
     smsStatus: !user.smsOptIn ? 'not_enabled' : user.phone ? 'not_configured' : 'phone_missing',
   };
@@ -153,6 +161,21 @@ async function generateToken(user, departmentId) {
     console.error(`Email notification failed for token ${token._id}:`, error.message);
     notifications.emailStatus = 'failed';
     notifications.emailError = error.message;
+  }
+  try {
+    const admins = await User.find({ role: 'admin', active: true }).select('name email');
+    if (!admins.length) {
+      notifications.adminEmailStatus = 'no_admins';
+    } else {
+      const adminEmailSent = await sendTokenCreatedAdminEmail(admins, user, view);
+      notifications.adminEmailsSent = adminEmailSent === true;
+      notifications.adminEmailStatus = adminEmailSent === null ? 'not_configured' : adminEmailSent ? 'sent' : 'failed';
+      if (adminEmailSent === null) notifications.adminEmailError = 'Email provider is not configured on the server.';
+    }
+  } catch (error) {
+    console.error(`Admin email notification failed for token ${token._id}:`, error.message);
+    notifications.adminEmailStatus = 'failed';
+    notifications.adminEmailError = error.message;
   }
   if (user.smsOptIn && user.phone) {
     try {

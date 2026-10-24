@@ -63,6 +63,28 @@ async function sendTokenCreatedEmail(email, name, token) {
   }, 'email');
 }
 
+async function sendTokenCreatedAdminEmail(admins, user, token) {
+  if (!admins.length) return null;
+  const senderEmail = process.env.BREVO_SENDER_EMAIL;
+  const senderName = process.env.BREVO_SENDER_NAME;
+  if (!process.env.BREVO_API_KEY && !senderEmail && !senderName) return null;
+  if (!process.env.BREVO_API_KEY || !senderEmail || !senderName)
+    throw new Error('Brevo email configuration is incomplete');
+
+  const escapedToken = htmlEscape(token.tokenNumber);
+  const escapedDepartment = htmlEscape(token.department.name);
+  const escapedWait = htmlEscape(token.estimatedWaitLabel);
+  const escapedUserName = htmlEscape(user.name);
+  const escapedUserEmail = htmlEscape(user.email);
+  return sendBrevoRequest('smtp/email', {
+    sender: { email: senderEmail, name: senderName },
+    to: admins.map((admin) => ({ email: admin.email, ...(admin.name && { name: admin.name }) })),
+    subject: `New SmartQueue token ${token.tokenNumber} created`,
+    textContent: `A token was created by ${user.name} (${user.email}): ${buildTokenCreatedMessage(token)}`,
+    htmlContent: `<p>A token was created by <strong>${escapedUserName}</strong> (${escapedUserEmail}):</p><p>Token <strong>${escapedToken}</strong> for ${escapedDepartment}.</p><p>Estimated wait: ${escapedWait}.</p>`,
+  }, 'email');
+}
+
 async function sendTokenCalledEmail(email, name, token) {
   const senderEmail = process.env.BREVO_SENDER_EMAIL;
   const senderName = process.env.BREVO_SENDER_NAME;
@@ -99,6 +121,7 @@ module.exports = {
   buildTokenCreatedMessage,
   buildTokenCalledMessage,
   sendTokenCreatedEmail,
+  sendTokenCreatedAdminEmail,
   sendTokenCalledEmail,
   sendTokenCreatedSms,
 };

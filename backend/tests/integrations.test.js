@@ -5,6 +5,7 @@ const {
   buildTokenCreatedMessage,
   buildTokenCalledMessage,
   sendTokenCreatedEmail,
+  sendTokenCreatedAdminEmail,
   sendTokenCalledEmail,
   sendTokenCreatedSms,
 } = require('../services/sms.service');
@@ -136,6 +137,48 @@ test('admin registration requires the configured shared code and is capped at fi
       const body = JSON.parse(request.options.body);
       assert.deepStrictEqual(body.sender, { email: 'verified@example.com', name: 'SmartQueue' });
       assert.deepStrictEqual(body.to, [{ email: 'user@example.com', name: 'User' }]);
+      assert.ok(body.htmlContent.includes('&lt;Admissions&gt;'));
+    } finally {
+      global.fetch = oldFetch;
+      for (const [key, value] of Object.entries(oldEnv)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
+  });
+
+  test('token creation email notifies all active admins with user and token details', async () => {
+    const oldFetch = global.fetch;
+    const oldEnv = Object.fromEntries(['BREVO_API_KEY', 'BREVO_SENDER_EMAIL', 'BREVO_SENDER_NAME'].map((key) => [key, process.env[key]]));
+    process.env.BREVO_API_KEY = 'test-api-key';
+    process.env.BREVO_SENDER_EMAIL = 'verified@example.com';
+    process.env.BREVO_SENDER_NAME = 'SmartQueue';
+    let request;
+    global.fetch = async (url, options) => {
+      request = { url, options };
+      return { ok: true };
+    };
+    try {
+      assert.strictEqual(await sendTokenCreatedAdminEmail([
+        { email: 'admin@example.com', name: 'Admin' },
+        { email: 'admin2@example.com', name: 'Admin 2' },
+      ], {
+        name: '<User>',
+        email: 'user@example.com',
+      }, {
+        tokenNumber: 'AD-012',
+        department: { name: '<Admissions>' },
+        estimatedWaitLabel: 'about 10 minutes',
+      }), true);
+      assert.strictEqual(request.url, 'https://api.brevo.com/v3/smtp/email');
+      const body = JSON.parse(request.options.body);
+      assert.deepStrictEqual(body.to, [
+        { email: 'admin@example.com', name: 'Admin' },
+        { email: 'admin2@example.com', name: 'Admin 2' },
+      ]);
+      assert.strictEqual(body.subject, 'New SmartQueue token AD-012 created');
+      assert.ok(body.textContent.includes('user@example.com'));
+      assert.ok(body.htmlContent.includes('&lt;User&gt;'));
       assert.ok(body.htmlContent.includes('&lt;Admissions&gt;'));
     } finally {
       global.fetch = oldFetch;
